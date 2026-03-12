@@ -1,4 +1,3 @@
-import Image from 'next/image'
 import ExperimentCard from './components/ExperimentCard'
 
 export default function Home() {
