@@ -2,6 +2,11 @@
 
 import { useState } from "react";
 
+type Position = {
+  x: number
+  y: number
+};
+
 export default function GraphVisualizer() {
   const [selected, setSelected] = useState<number | null>(null);
   
@@ -12,11 +17,6 @@ export default function GraphVisualizer() {
     4: [1, 3]
   };
 
-  type Position = {
-    x: number
-    y: number
-  }
-
   const positions: Record<number, Position> = {
     1: { x: 100, y: 100 },
     2: { x: 300, y: 100 },
@@ -24,12 +24,10 @@ export default function GraphVisualizer() {
     4: { x: 100, y: 300 }
   };
 
-  console.log(Object.entries(graph));
-
   return <svg width="400" height="400">
     {/* Draw edges */}
-    {Object.entries(graph).map(([node, neighbors]) =>
-      neighbors.map((neighbor) => {
+    {Object.entries(graph).map(([node, neighbors]) => {
+      return neighbors.map((neighbor) => {
         const from = positions[Number(node)];
         const to = positions[neighbor];
 
@@ -37,6 +35,7 @@ export default function GraphVisualizer() {
           <line key={`${node}-${neighbor}`} x1={from.x} y1={from.y} x2={to.x} y2={to.y} stroke="white" />
         )
       })
+    }
     )}
     {/* Draw nodes */}
     {Object.keys(graph).map((node) => {
