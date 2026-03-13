@@ -3,30 +3,24 @@
 import ExperimentCard from './components/ExperimentCard'
 import PageWrapper from './components/PageWrapper'
 
-const testimonials = [
+const experiments = [
   [
     [
       {
-        body: 'Laborum quis quam. Dolorum et ut quod quia. Voluptas numquam delectus nihil. Aut enim doloremque et ipsam.',
-        author: {
-          name: 'Leslie Alexander',
-          handle: 'lesliealexander',
-          imageUrl:
-            'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
-        },
+        title: "React Rendering",
+        link: "/experiments/react-rendering"
+      },
+      {
+        title: "Tiny React",
+        link: "/experiments/tiny-react"
       },
     ],
   ],
   [
     [
       {
-        body: 'Voluptas quos itaque ipsam in voluptatem est. Iste eos blanditiis repudiandae. Earum deserunt enim molestiae ipsum perferendis recusandae saepe corrupti.',
-        author: {
-          name: 'Tom Cook',
-          handle: 'tomcook',
-          imageUrl:
-            'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
-        },
+        title: "Graph Visualizer",
+        link: "/experiments/graph-visualizer"
       },
     ],
   ],
@@ -98,21 +92,21 @@ export default function Home() {
               </p>
             </div>
             <div className="mx-auto mt-16 grid max-w-2xl grid-cols-1 grid-rows-1 gap-8 text-sm/6 text-gray-100 sm:mt-20 sm:grid-cols-2 xl:mx-0 xl:max-w-none xl:grid-flow-col xl:grid-cols-4">
-              {testimonials.map((columnGroup, columnGroupIdx) => (
+              {experiments.map((columnGroup, columnGroupIdx) => (
                 <div key={columnGroupIdx} className="space-y-8 xl:contents xl:space-y-0">
                   {columnGroup.map((column, columnIdx) => (
                     <div
                       key={columnIdx}
                       className={classNames(
                         (columnGroupIdx === 0 && columnIdx === 0) ||
-                          (columnGroupIdx === testimonials.length - 1 && columnIdx === columnGroup.length - 1)
+                          (columnGroupIdx === experiments.length - 1 && columnIdx === columnGroup.length - 1)
                           ? 'xl:row-span-2'
                           : 'xl:row-start-1',
                         'space-y-8',
                       )}
                     >
-                      {column.map((testimonial, index) => (
-                        <ExperimentCard key={index} title="React Rendering" href="/experiments/react-rendering" />
+                      {column.map((experiment, index) => (
+                        <ExperimentCard key={index} title={experiment.title} href={experiment.link} />
                       ))}
                     </div>
                   ))}
