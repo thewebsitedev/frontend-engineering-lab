@@ -1,31 +1,31 @@
+'use client';
+
 import PageWrapper from "@/app/components/PageWrapper";
 import { useEffect, useRef } from "react";
 
+type TinyNode = TinyElement | TinyTextElement
+
 type TinyElement = {
   type: string
-  props: {
-    [key: string]: any
-    children: TinyElement[]
-  }
+  props: ElementProps
 }
 
-function createElement(
-  type: string,
-  props: Record<string, any> | null,
-  ...children: (TinyElement | string)[]
-): TinyElement {
-  return {
-    type,
-    props: {
-      ...(props || {}),
-      children: children.map(child =>
-        typeof child === "object" ? child : createTextElement(child)
-      )
-    }
-  }
+type TinyTextElement = {
+  type: "TEXT_ELEMENT"
+  props: TextProps
 }
 
-function createTextElement(text: string): TinyElement {
+type ElementProps = {
+  children: TinyNode[]
+  attrs: Record<string, string>
+}
+
+type TextProps = {
+  nodeValue: string
+  children: []
+}
+
+function createTextElement(text: string): TinyTextElement {
   return {
     type: "TEXT_ELEMENT",
     props: {
@@ -35,27 +35,44 @@ function createTextElement(text: string): TinyElement {
   }
 }
 
-function render(element: TinyElement, container: HTMLElement) {
-  const dom =
-    element.type === "TEXT_ELEMENT"
-      ? document.createTextNode(element.props.nodeValue)
-      : document.createElement(element.type)
+function createElement(
+  type: string,
+  props: Record<string, string> | null,
+  ...children: (TinyNode | string)[]
+): TinyElement {
+  return {
+    type,
+    props: {
+      attrs: props ?? {},
+      children: children.map(child =>
+        typeof child === "string" ? createTextElement(child) : child
+      )
+    }
+  }
+}
 
-  Object.keys(element.props)
-    .filter(key => key !== "children")
-    .forEach(name => {
-      ;(dom as any)[name] = element.props[name]
+function render(element: TinyNode, container: Node): void {
+  let dom: Node
+
+  if (element.type === "TEXT_ELEMENT") {
+    dom = document.createTextNode((element as TinyTextElement).props.nodeValue)
+  } else {
+    const tinyEl = element as TinyElement
+    const el = document.createElement(tinyEl.type)
+
+    Object.entries(tinyEl.props.attrs).forEach(([name, value]) => {
+      el.setAttribute(name, value)
     })
 
-  element.props.children.forEach(child =>
-    render(child, dom as HTMLElement)
-  )
+    tinyEl.props.children.forEach(child => render(child, el))
+    dom = el
+  }
 
   container.appendChild(dom)
 }
 
 export default function Page() {
-  const containerRef = useRef<HTMLDivElement | null>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -64,11 +81,12 @@ export default function Page() {
       "div",
       { id: "tiny-root" },
       createElement("h1", null, "Hello Tiny React"),
-      createElement("p", null, "This is a mini renderer")
+      createElement("p", null, "Rendered by a tiny renderer")
     )
 
     render(tree, containerRef.current)
   }, [])
+
   return (
     <PageWrapper>
       <h1 className="mt-2 text-3xl font-semibold tracking-tight text-balance text-white sm:text-4xl">
@@ -82,7 +100,7 @@ export default function Page() {
         <li>Rendering</li>
         <li>Reconciliation</li>
       </ul>
-      <div ref={containerRef} />
+      <div ref={containerRef} className="text-amber-600 mt-10" />
     </PageWrapper>
   )
 }
