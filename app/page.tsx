@@ -1,7 +1,5 @@
 'use client'
 
-throw new Error("fail");
-
 import ExperimentCard from './components/ExperimentCard'
 import PageWrapper from './components/PageWrapper'
 
