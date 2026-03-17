@@ -1,12 +1,16 @@
 #!/bin/bash
 
-cd ~/projects/frontend-engineering-lab
+LOGFILE=/root/deploy.log
 
-echo "Pulling latest code..."
-git pull origin main
+echo "==== DEPLOY START $(date) ====" >> $LOGFILE
 
-echo "Rebuilding container..."
-docker compose down
-docker compose up -d --build
+cd ~/projects/frontend-engineering-lab || exit
 
-echo "Deploy complete!"
+echo "Pulling latest code..." >> $LOGFILE
+git pull origin main >> $LOGFILE 2>&1
+
+echo "Rebuilding container..." >> $LOGFILE
+docker compose down >> $LOGFILE 2>&1
+docker compose up -d --build >> $LOGFILE 2>&1
+
+echo "==== DEPLOY END $(date) ====" >> $LOGFILE
