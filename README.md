@@ -69,3 +69,5 @@ Child stops re-rendering
 
 Conclusion
 React.memo memoizes component output
+
+secure deploy
