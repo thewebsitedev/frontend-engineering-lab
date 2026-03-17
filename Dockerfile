@@ -1,4 +1,5 @@
-FROM node:24-alpine
+# 1️⃣ Build stage
+FROM node:24-alpine AS builder
 
 WORKDIR /app
 
@@ -7,6 +8,18 @@ RUN npm install
 
 COPY . .
 
+RUN npm run build
+
+# 2️⃣ Production stage
+FROM node:24-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm install --omit=dev --ignore-scripts
+
+COPY --from=builder /app ./
+
 EXPOSE 3000
 
-CMD ["npm","run","dev"]
+CMD ["npm", "start"]
