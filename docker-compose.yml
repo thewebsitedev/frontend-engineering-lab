@@ -1,7 +1,14 @@
 services:
-  app:
+  app-blue:
     build: .
-    container_name: practice-app
+    container_name: app-blue
     restart: always
     ports:
-      - "3000:3000"
+      - "3001:3000"
+
+  app-green:
+    build: .
+    container_name: app-green
+    restart: always
+    ports:
+      - "3002:3000"
