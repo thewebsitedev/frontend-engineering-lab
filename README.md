@@ -22,8 +22,7 @@ Prettier
 Husky
 lint-staged
 
-vercel: https://frontend-engineering-lab-tau.vercel.app
-
+vercel: <https://frontend-engineering-lab-tau.vercel.app>
 
 ### Recommended Experiments to Add
 
@@ -31,17 +30,22 @@ Your lab could grow into something impressive.
 
 Examples:
 
-##### React
+#### React
+
 react-rendering
 react-memo
 useMemo-vs-useCallback
 react-batching
 reconciliation-demo
-##### Algorithms
+
+#### Algorithms
+
 clone-graph-visualizer
 dfs-vs-bfs
 tree-traversal
-##### JavaScript
+
+#### JavaScript
+
 event-loop-visualizer
 closure-demo
 promise-execution-order
@@ -65,3 +69,5 @@ Child stops re-rendering
 
 Conclusion
 React.memo memoizes component output
+
+test deploy
