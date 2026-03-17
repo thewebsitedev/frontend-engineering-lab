@@ -71,3 +71,4 @@ Conclusion
 React.memo memoizes component output
 
 test deploy
+testing
