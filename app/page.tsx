@@ -1,129 +1,352 @@
-'use client'
-
-import ExperimentCard from './components/ExperimentCard'
-import PageWrapper from './components/PageWrapper'
+import Link from 'next/link'
+import { C, MONO, SANS } from './algorithms/theme'
 
 const experiments = [
-  [
-    [
-      {
-        title: "React Rendering",
-        link: "/experiments/react-rendering"
-      },
-      {
-        title: "Tiny React",
-        link: "/experiments/tiny-react"
-      },
-    ],
-  ],
-  [
-    [
-      {
-        title: "Graph Visualizer",
-        link: "/experiments/graph-visualizer"
-      },
-    ],
-  ],
-  [
-    [
-      {
-        title: "Algorithms",
-        link: "/algorithms"
-      },
-    ],
-  ],
+  {
+    title: 'Graph Visualizer',
+    blurb: 'Interactive SVG graph — click a node to light up its neighbors.',
+    href: '/experiments/graph-visualizer',
+    tag: 'SVG · State',
+  },
+  {
+    title: 'React Rendering',
+    blurb: 'See exactly when React re-renders — memo, useMemo, useCallback.',
+    href: '/experiments/react-rendering',
+    tag: 'React internals',
+  },
+  {
+    title: 'Tiny React',
+    blurb: 'A miniature React-like renderer built from first principles.',
+    href: '/experiments/tiny-react',
+    tag: 'From scratch',
+  },
 ]
 
-function classNames(...classes: (string | false | null | undefined)[]) {
-  return classes.filter(Boolean).join(' ')
-}
+// Small union-find motif echoing the algorithms section.
+const NODES = [
+  { id: 1, x: 40, y: 38 },
+  { id: 2, x: 150, y: 38 },
+  { id: 3, x: 40, y: 140 },
+  { id: 4, x: 150, y: 140 },
+]
+const EDGES: [number, number, boolean][] = [
+  [1, 2, false],
+  [1, 3, false],
+  [3, 4, false],
+  [2, 4, true], // the redundant edge — drawn in signal
+]
 
 export default function Home() {
   return (
-    <PageWrapper>
-      {/* Cards section */}
-      <div className="relative isolate mt-32 sm:mt-56 sm:pt-32">
-        <svg
-          aria-hidden="true"
-          className="absolute inset-0 -z-10 hidden size-full mask-[radial-gradient(64rem_64rem_at_top,white,transparent)] stroke-white/10 sm:block"
+    <div
+      style={{
+        background: C.paper,
+        color: C.ink,
+        minHeight: '100vh',
+        fontFamily: SANS,
+      }}
+    >
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap');
+        a{color:inherit;text-decoration:none}
+        .card{transition:transform .14s ease, box-shadow .14s ease}
+        .card:hover{transform:translate(-3px,-3px);box-shadow:6px 6px 0 ${C.ink}}
+        .feature:hover{transform:translate(-4px,-4px);box-shadow:8px 8px 0 ${C.signal}}
+        .feature .go{transition:gap .14s ease}
+        .feature:hover .go{gap:14px}
+        @media (prefers-reduced-motion: reduce){*{transition:none!important}}`}</style>
+
+      {/* Top bar */}
+      <div
+        style={{
+          maxWidth: 1040,
+          margin: '0 auto',
+          padding: '20px 16px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 12,
+        }}
+      >
+        <span style={{ fontFamily: MONO, fontWeight: 700, fontSize: 13, letterSpacing: 1 }}>
+          FE·LAB
+        </span>
+        <nav style={{ display: 'flex', gap: 18, fontFamily: MONO, fontSize: 13 }}>
+          <Link href="/algorithms" style={{ color: C.trace }}>
+            algorithms
+          </Link>
+          <Link href="/experiments/graph-visualizer" style={{ color: C.trace }}>
+            experiments
+          </Link>
+        </nav>
+      </div>
+
+      <div style={{ maxWidth: 1040, margin: '0 auto', padding: '0 16px 72px' }}>
+        {/* Hero */}
+        <section
+          style={{
+            borderTop: `2px solid ${C.ink}`,
+            paddingTop: 40,
+            display: 'grid',
+            gridTemplateColumns: 'minmax(0,1.4fr) minmax(0,1fr)',
+            gap: 32,
+            alignItems: 'center',
+          }}
         >
-          <defs>
-            <pattern
-              x="50%"
-              y={0}
-              id="55d3d46d-692e-45f2-becd-d8bdc9344f45"
-              width={200}
-              height={200}
-              patternUnits="userSpaceOnUse"
+          <div>
+            <div
+              style={{
+                fontFamily: MONO,
+                fontSize: 12,
+                letterSpacing: 2,
+                textTransform: 'uppercase',
+                color: C.signal,
+                marginBottom: 16,
+              }}
             >
-              <path d="M.5 200V.5H200" fill="none" />
-            </pattern>
-          </defs>
-          <svg x="50%" y={0} className="overflow-visible fill-gray-800/20">
-            <path
-              d="M-200.5 0h201v201h-201Z M599.5 0h201v201h-201Z M399.5 400h201v201h-201Z M-400.5 600h201v201h-201Z"
-              strokeWidth={0}
-            />
-          </svg>
-          <rect fill="url(#55d3d46d-692e-45f2-becd-d8bdc9344f45)" width="100%" height="100%" strokeWidth={0} />
-        </svg>
-        <div className="relative">
-          <div
-            aria-hidden="true"
-            className="absolute inset-x-0 top-1/2 -z-10 -translate-y-1/2 transform-gpu overflow-hidden opacity-30 blur-3xl"
-          >
-            <div
+              Frontend Engineering Lab
+            </div>
+            <h1
               style={{
-                clipPath:
-                  'polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)',
+                fontFamily: MONO,
+                fontWeight: 700,
+                fontSize: 'clamp(34px, 6vw, 60px)',
+                lineHeight: 1.02,
+                letterSpacing: -2,
+                margin: 0,
               }}
-              className="ml-[max(50%,38rem)] aspect-1313/771 w-328.25 bg-linear-to-tr from-[#ff80b5] to-[#9089fc]"
-            />
-          </div>
-          <div
-            aria-hidden="true"
-            className="absolute inset-x-0 top-0 -z-10 flex transform-gpu overflow-hidden pt-32 opacity-25 blur-3xl sm:pt-40 xl:justify-end"
-          >
-            <div
+            >
+              Build it,
+              <br />
+              then watch
+              <br />
+              it run.
+            </h1>
+            <p
               style={{
-                clipPath:
-                  'polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)',
+                fontSize: 17,
+                lineHeight: 1.6,
+                maxWidth: 460,
+                marginTop: 20,
+                color: C.ink,
+                opacity: 0.85,
               }}
-              className="-ml-88 aspect-1313/771 w-328.25 flex-none origin-top-right rotate-30 bg-linear-to-tr from-[#ff80b5] to-[#9089fc] xl:mr-[calc(50%-12rem)] xl:ml-0"
-            />
+            >
+              A playground for the things that are easier to understand when you can step through
+              them — algorithms, React internals, and interactive visualizations.
+            </p>
+            <div style={{ display: 'flex', gap: 12, marginTop: 28, flexWrap: 'wrap' }}>
+              <Link href="/algorithms" style={cta(C.ink, C.paper)}>
+                Explore algorithms →
+              </Link>
+              <Link href="/experiments/graph-visualizer" style={cta(C.paper, C.ink)}>
+                See experiments
+              </Link>
+            </div>
           </div>
-          <div className="mx-auto max-w-7xl px-6 lg:px-8">
-            <div className="mx-auto max-w-2xl text-center">
-              {/* <h2 className="text-base/7 font-semibold text-indigo-400">Testimonials</h2> */}
-              <p className="mt-2 text-4xl font-semibold tracking-tight text-balance text-white sm:text-5xl">
-                Frontend Lab In The Clouds
+
+          {/* Decorative union-find motif */}
+          <div style={{ justifySelf: 'center' }}>
+            <svg viewBox="0 0 190 180" width="100%" style={{ maxWidth: 240, display: 'block' }}>
+              {EDGES.map(([a, b, red], idx) => {
+                const na = NODES.find((n) => n.id === a)!
+                const nb = NODES.find((n) => n.id === b)!
+                return (
+                  <line
+                    key={idx}
+                    x1={na.x}
+                    y1={na.y}
+                    x2={nb.x}
+                    y2={nb.y}
+                    stroke={red ? C.signal : C.ink}
+                    strokeWidth={red ? 3 : 2}
+                    strokeDasharray={red ? '6 5' : '2 0'}
+                    strokeLinecap="round"
+                  />
+                )
+              })}
+              {NODES.map((n) => (
+                <g key={n.id}>
+                  <circle cx={n.x} cy={n.y} r={20} fill="#FBF9F3" stroke={C.ink} strokeWidth={2} />
+                  <text
+                    x={n.x}
+                    y={n.y + 5}
+                    textAnchor="middle"
+                    fontFamily={MONO}
+                    fontWeight="700"
+                    fontSize="15"
+                    fill={C.ink}
+                  >
+                    {n.id}
+                  </text>
+                </g>
+              ))}
+            </svg>
+          </div>
+        </section>
+
+        {/* Featured: Algorithms */}
+        <SectionLabel>Featured</SectionLabel>
+        <Link href="/algorithms">
+          <div
+            className="feature card"
+            style={{
+              border: `2px solid ${C.ink}`,
+              borderRadius: 10,
+              background: '#FBF9F3',
+              padding: 28,
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: 20,
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
+            <div style={{ maxWidth: 560 }}>
+              <div
+                style={{
+                  fontFamily: MONO,
+                  fontSize: 11,
+                  letterSpacing: 1,
+                  textTransform: 'uppercase',
+                  color: C.signal,
+                  marginBottom: 8,
+                }}
+              >
+                4 problems · 5 languages
+              </div>
+              <div
+                style={{
+                  fontFamily: MONO,
+                  fontWeight: 700,
+                  fontSize: 26,
+                  letterSpacing: -1,
+                  marginBottom: 8,
+                }}
+              >
+                Algorithms, traced step by step
+              </div>
+              <p style={{ fontSize: 15.5, lineHeight: 1.6, margin: 0, opacity: 0.85 }}>
+                Worked intuition, a step-by-step walkthrough, and reference code in JavaScript,
+                TypeScript, Python, Java, and C++ — with an interactive trace for Union–Find.
               </p>
             </div>
-            <div className="mx-auto mt-16 grid max-w-2xl grid-cols-1 grid-rows-1 gap-8 text-sm/6 text-gray-100 sm:mt-20 sm:grid-cols-2 xl:mx-0 xl:max-w-none xl:grid-flow-col xl:grid-cols-4">
-              {experiments.map((columnGroup, columnGroupIdx) => (
-                <div key={columnGroupIdx} className="space-y-8 xl:contents xl:space-y-0">
-                  {columnGroup.map((column, columnIdx) => (
-                    <div
-                      key={columnIdx}
-                      className={classNames(
-                        (columnGroupIdx === 0 && columnIdx === 0) ||
-                          (columnGroupIdx === experiments.length - 1 && columnIdx === columnGroup.length - 1)
-                          ? 'xl:row-span-2'
-                          : 'xl:row-start-1',
-                        'space-y-8',
-                      )}
-                    >
-                      {column.map((experiment, index) => (
-                        <ExperimentCard key={index} title={experiment.title} href={experiment.link} />
-                      ))}
-                    </div>
-                  ))}
-                </div>
-              ))}
+            <div
+              className="go"
+              style={{
+                fontFamily: MONO,
+                fontWeight: 700,
+                fontSize: 15,
+                color: C.signal,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+              }}
+            >
+              open →
             </div>
           </div>
+        </Link>
+
+        {/* Experiments grid */}
+        <SectionLabel>Experiments</SectionLabel>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+            gap: 16,
+          }}
+        >
+          {experiments.map((e) => (
+            <Link key={e.href} href={e.href}>
+              <div
+                className="card"
+                style={{
+                  border: `1.5px solid ${C.ink}`,
+                  borderRadius: 10,
+                  background: '#FBF9F3',
+                  padding: 22,
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 10,
+                }}
+              >
+                <div
+                  style={{
+                    fontFamily: MONO,
+                    fontSize: 11,
+                    letterSpacing: 1,
+                    textTransform: 'uppercase',
+                    color: C.trace,
+                  }}
+                >
+                  {e.tag}
+                </div>
+                <div style={{ fontFamily: MONO, fontWeight: 700, fontSize: 19, letterSpacing: -0.5 }}>
+                  {e.title}
+                </div>
+                <p style={{ fontSize: 14, lineHeight: 1.55, margin: 0, opacity: 0.8 }}>{e.blurb}</p>
+                <div style={{ flex: 1 }} />
+                <div style={{ fontFamily: MONO, fontSize: 13, color: C.signal }}>open →</div>
+              </div>
+            </Link>
+          ))}
         </div>
+
+        {/* Footer */}
+        <footer
+          style={{
+            borderTop: `2px solid ${C.ink}`,
+            marginTop: 56,
+            paddingTop: 18,
+            display: 'flex',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: 8,
+            fontFamily: MONO,
+            fontSize: 12,
+            color: C.slate,
+          }}
+        >
+          <span>© 2026 Frontend Engineering Lab</span>
+          <span>built with Next.js · React</span>
+        </footer>
       </div>
-    </PageWrapper>
+    </div>
   )
+}
+
+function SectionLabel({ children }: { children: string }) {
+  return (
+    <div
+      style={{
+        fontFamily: MONO,
+        fontSize: 12,
+        letterSpacing: 1.5,
+        textTransform: 'uppercase',
+        color: C.slate,
+        margin: '52px 0 14px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 12,
+      }}
+    >
+      {children}
+      <span style={{ flex: 1, height: 1, background: C.wire }} />
+    </div>
+  )
+}
+
+function cta(bg: string, fg: string): React.CSSProperties {
+  return {
+    fontFamily: MONO,
+    fontWeight: 700,
+    fontSize: 14,
+    padding: '12px 20px',
+    background: bg,
+    color: fg,
+    border: `1.5px solid ${C.ink}`,
+    borderRadius: 6,
+    display: 'inline-block',
+  }
 }
