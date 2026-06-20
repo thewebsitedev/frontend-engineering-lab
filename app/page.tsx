@@ -24,6 +24,14 @@ const experiments = [
       },
     ],
   ],
+  [
+    [
+      {
+        title: "Algorithms",
+        link: "/algorithms"
+      },
+    ],
+  ],
 ]
 
 function classNames(...classes: (string | false | null | undefined)[]) {
