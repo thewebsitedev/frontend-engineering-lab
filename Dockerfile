@@ -15,11 +15,16 @@ FROM node:24-alpine
 
 WORKDIR /app
 
-COPY package*.json ./
-RUN npm install --omit=dev --ignore-scripts
+ENV NODE_ENV=production
+ENV PORT=3000
+# Bind to all interfaces so the published Docker port is reachable.
+ENV HOSTNAME=0.0.0.0
 
-COPY --from=builder /app ./
+# Standalone output bundles a minimal server + only the deps it traces as needed.
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/public ./public
 
 EXPOSE 3000
 
-CMD ["npm", "start"]
+CMD ["node", "server.js"]

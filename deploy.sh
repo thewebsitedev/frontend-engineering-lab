@@ -35,7 +35,7 @@ HEALTHY=false
 
 for i in {1..10}; do
   sleep 2
-  if curl -f http://localhost:$NEW_PORT > /dev/null 2>&1; then
+  if curl -f http://localhost:$NEW_PORT/api/health > /dev/null 2>&1; then
     HEALTHY=true
     echo "Health check passed on attempt $i" >> $LOGFILE
     break
