@@ -1,4 +1,4 @@
-import type { Algorithm, Category } from './types'
+import type { Algorithm, Category, Lang } from './types'
 import RedundantConnectionViz from './algos/redundant-connection/RedundantConnectionViz'
 import TwoSumViz from './algos/two-sum/TwoSumViz'
 import GroupAnagramsViz from './algos/group-anagrams/GroupAnagramsViz'
@@ -6,6 +6,133 @@ import ValidParenthesesViz from './algos/valid-parentheses/ValidParenthesesViz'
 import NumberOfIslandsViz from './algos/number-of-islands/NumberOfIslandsViz'
 import BinaryTreeLevelOrderViz from './algos/binary-tree-level-order/BinaryTreeLevelOrderViz'
 import LowestCommonAncestorViz from './algos/lowest-common-ancestor/LowestCommonAncestorViz'
+
+// Lowest Common Ancestor has two notable solutions, shared below.
+const LCA_RECURSIVE: Record<Lang, string> = {
+  py: `def lowestCommonAncestor(root, p, q):
+    if not root or root is p or root is q:
+        return root
+    left = lowestCommonAncestor(root.left, p, q)
+    right = lowestCommonAncestor(root.right, p, q)
+    if left and right:
+        return root
+    return left or right
+`,
+  js: `function lowestCommonAncestor(root, p, q) {
+  if (!root || root === p || root === q) return root;
+  const left = lowestCommonAncestor(root.left, p, q);
+  const right = lowestCommonAncestor(root.right, p, q);
+  if (left && right) return root;
+  return left || right;
+}
+`,
+  ts: `function lowestCommonAncestor(
+  root: TreeNode | null,
+  p: TreeNode,
+  q: TreeNode,
+): TreeNode | null {
+  if (!root || root === p || root === q) return root;
+  const left = lowestCommonAncestor(root.left, p, q);
+  const right = lowestCommonAncestor(root.right, p, q);
+  if (left && right) return root;
+  return left ?? right;
+}
+`,
+  java: `class Solution {
+    public TreeNode lowestCommonAncestor(TreeNode root, TreeNode p, TreeNode q) {
+        if (root == null || root == p || root == q) return root;
+        TreeNode left = lowestCommonAncestor(root.left, p, q);
+        TreeNode right = lowestCommonAncestor(root.right, p, q);
+        if (left != null && right != null) return root;
+        return left != null ? left : right;
+    }
+}
+`,
+  cpp: `class Solution {
+public:
+    TreeNode* lowestCommonAncestor(TreeNode* root, TreeNode* p, TreeNode* q) {
+        if (!root || root == p || root == q) return root;
+        TreeNode* left = lowestCommonAncestor(root->left, p, q);
+        TreeNode* right = lowestCommonAncestor(root->right, p, q);
+        if (left && right) return root;
+        return left ? left : right;
+    }
+};
+`,
+}
+
+// Iterative solution that exploits the BST ordering (LeetCode 235).
+const LCA_BST: Record<Lang, string> = {
+  py: `def lowestCommonAncestor(root, p, q):
+    while root:
+        if p.val < root.val and q.val < root.val:
+            root = root.left
+        elif p.val > root.val and q.val > root.val:
+            root = root.right
+        else:
+            return root
+`,
+  js: `function lowestCommonAncestor(root, p, q) {
+  while (root) {
+    if (p.val < root.val && q.val < root.val) {
+      root = root.left;
+    } else if (p.val > root.val && q.val > root.val) {
+      root = root.right;
+    } else {
+      return root;
+    }
+  }
+}
+`,
+  ts: `function lowestCommonAncestor(
+  root: TreeNode | null,
+  p: TreeNode,
+  q: TreeNode,
+): TreeNode | null {
+  while (root) {
+    if (p.val < root.val && q.val < root.val) {
+      root = root.left;
+    } else if (p.val > root.val && q.val > root.val) {
+      root = root.right;
+    } else {
+      return root;
+    }
+  }
+  return null;
+}
+`,
+  java: `class Solution {
+    public TreeNode lowestCommonAncestor(TreeNode root, TreeNode p, TreeNode q) {
+        while (root != null) {
+            if (p.val < root.val && q.val < root.val) {
+                root = root.left;
+            } else if (p.val > root.val && q.val > root.val) {
+                root = root.right;
+            } else {
+                return root;
+            }
+        }
+        return null;
+    }
+}
+`,
+  cpp: `class Solution {
+public:
+    TreeNode* lowestCommonAncestor(TreeNode* root, TreeNode* p, TreeNode* q) {
+        while (root) {
+            if (p->val < root->val && q->val < root->val) {
+                root = root->left;
+            } else if (p->val > root->val && q->val > root->val) {
+                root = root->right;
+            } else {
+                return root;
+            }
+        }
+        return nullptr;
+    }
+};
+`,
+}
 
 export const CATEGORIES: Category[] = [
   {
@@ -585,58 +712,21 @@ public:
       space: 'O(h) for the recursion stack, where h is the tree height.',
     },
     Visualizer: LowestCommonAncestorViz,
-    code: {
-      py: `def lowestCommonAncestor(root, p, q):
-    if not root or root is p or root is q:
-        return root
-    left = lowestCommonAncestor(root.left, p, q)
-    right = lowestCommonAncestor(root.right, p, q)
-    if left and right:
-        return root
-    return left or right
-`,
-      js: `function lowestCommonAncestor(root, p, q) {
-  if (!root || root === p || root === q) return root;
-  const left = lowestCommonAncestor(root.left, p, q);
-  const right = lowestCommonAncestor(root.right, p, q);
-  if (left && right) return root;
-  return left || right;
-}
-`,
-      ts: `function lowestCommonAncestor(
-  root: TreeNode | null,
-  p: TreeNode,
-  q: TreeNode,
-): TreeNode | null {
-  if (!root || root === p || root === q) return root;
-  const left = lowestCommonAncestor(root.left, p, q);
-  const right = lowestCommonAncestor(root.right, p, q);
-  if (left && right) return root;
-  return left ?? right;
-}
-`,
-      java: `class Solution {
-    public TreeNode lowestCommonAncestor(TreeNode root, TreeNode p, TreeNode q) {
-        if (root == null || root == p || root == q) return root;
-        TreeNode left = lowestCommonAncestor(root.left, p, q);
-        TreeNode right = lowestCommonAncestor(root.right, p, q);
-        if (left != null && right != null) return root;
-        return left != null ? left : right;
-    }
-}
-`,
-      cpp: `class Solution {
-public:
-    TreeNode* lowestCommonAncestor(TreeNode* root, TreeNode* p, TreeNode* q) {
-        if (!root || root == p || root == q) return root;
-        TreeNode* left = lowestCommonAncestor(root->left, p, q);
-        TreeNode* right = lowestCommonAncestor(root->right, p, q);
-        if (left && right) return root;
-        return left ? left : right;
-    }
-};
-`,
-    },
+    code: LCA_RECURSIVE,
+    solutions: [
+      {
+        name: '1 · Recursive — works on any binary tree',
+        blurb:
+          'Bottom-up DFS: each call reports whether a target is in its subtree; the node that hears back from both sides is the LCA.',
+        code: LCA_RECURSIVE,
+      },
+      {
+        name: '2 · Iterative — binary search tree only',
+        blurb:
+          'When the tree is a BST, the ordering tells you which way to walk. Where the paths to p and q diverge is the LCA — O(h) time, O(1) space.',
+        code: LCA_BST,
+      },
+    ],
   },
 
   {

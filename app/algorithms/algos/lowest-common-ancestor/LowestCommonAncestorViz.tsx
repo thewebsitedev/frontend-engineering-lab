@@ -4,14 +4,26 @@ import { useState, useMemo, useCallback } from 'react'
 import { C, MONO } from '../../theme'
 import { type TNode, parseTree, layout } from '../../lib/tree'
 
-const PRESETS: { name: string; tree: string; p: string; q: string }[] = [
+type Approach = 'general' | 'bst'
+type Preset = { name: string; tree: string; p: string; q: string }
+
+const GENERAL_PRESETS: Preset[] = [
   { name: 'split', tree: '3,5,1,6,2,0,8,null,null,7,4', p: '5', q: '1' },
   { name: 'ancestor', tree: '3,5,1,6,2,0,8,null,null,7,4', p: '5', q: '4' },
   { name: 'deep', tree: '1,2,3,4,5,6,7', p: '4', q: '7' },
 ]
 
-// JS source shown in the trace panel (matches the default language).
-const CODE = [
+// BST presets — valid binary search trees so the iterative method is correct.
+const BST_PRESETS: Preset[] = [
+  { name: 'split', tree: '6,2,8,0,4,7,9,null,null,3,5', p: '2', q: '8' },
+  { name: 'ancestor', tree: '6,2,8,0,4,7,9,null,null,3,5', p: '2', q: '4' },
+  { name: 'leaves', tree: '6,2,8,0,4,7,9,null,null,3,5', p: '3', q: '5' },
+]
+
+const PRESETS: Record<Approach, Preset[]> = { general: GENERAL_PRESETS, bst: BST_PRESETS }
+
+// JS source per approach (matches the default language).
+const CODE_GENERAL = [
   { ln: 1, t: 'function lca(root, p, q) {' },
   { ln: 2, t: '  if (!root) return null;' },
   { ln: 3, t: '  if (root.val === p || root.val === q) return root;' },
@@ -20,6 +32,20 @@ const CODE = [
   { ln: 6, t: '  if (left && right) return root;' },
   { ln: 7, t: '  return left || right;' },
   { ln: 8, t: '}' },
+]
+
+const CODE_BST = [
+  { ln: 1, t: 'function lca(root, p, q) {' },
+  { ln: 2, t: '  while (root) {' },
+  { ln: 3, t: '    if (p < root.val && q < root.val) {' },
+  { ln: 4, t: '      root = root.left;' },
+  { ln: 5, t: '    } else if (p > root.val && q > root.val) {' },
+  { ln: 6, t: '      root = root.right;' },
+  { ln: 7, t: '    } else {' },
+  { ln: 8, t: '      return root;' },
+  { ln: 9, t: '    }' },
+  { ln: 10, t: '  }' },
+  { ln: 11, t: '}' },
 ]
 
 type Frame = {
@@ -33,7 +59,103 @@ type Frame = {
   note: string
 }
 
-function buildFrames(
+function isBST(nodes: TNode[], rootId: number | null): boolean {
+  const byId = new Map(nodes.map((n) => [n.id, n]))
+  const chk = (id: number | null, lo: number | null, hi: number | null): boolean => {
+    if (id === null) return true
+    const n = byId.get(id)!
+    if (lo !== null && n.val <= lo) return false
+    if (hi !== null && n.val >= hi) return false
+    return chk(n.left, lo, n.val) && chk(n.right, n.val, hi)
+  }
+  return chk(rootId, null, null)
+}
+
+function buildFramesBst(
+  nodes: TNode[],
+  rootId: number | null,
+  p: number,
+  q: number,
+): { frames: Frame[]; finalId: number | null } {
+  const byId = new Map(nodes.map((n) => [n.id, n]))
+  const frames: Frame[] = []
+  const path: number[] = []
+  let lcaId: number | null = null
+
+  frames.push({
+    kind: 'start',
+    line: 2,
+    current: null,
+    stack: [],
+    carries: [],
+    lca: null,
+    title: 'Start',
+    note: `Walk down using the BST order. Steer toward both ${p} and ${q}; where the paths diverge is the LCA.`,
+  })
+
+  let cur = rootId
+  while (cur !== null) {
+    const node = byId.get(cur)!
+    path.push(cur)
+    const val = node.val
+    if (p < val && q < val) {
+      frames.push({
+        kind: 'step',
+        line: 4,
+        current: cur,
+        stack: [...path],
+        carries: [...path],
+        lca: null,
+        title: `Go left from ${val}`,
+        note: `${p} and ${q} are both < ${val} → the LCA must be in the left subtree.`,
+      })
+      cur = node.left
+    } else if (p > val && q > val) {
+      frames.push({
+        kind: 'step',
+        line: 6,
+        current: cur,
+        stack: [...path],
+        carries: [...path],
+        lca: null,
+        title: `Go right from ${val}`,
+        note: `${p} and ${q} are both > ${val} → the LCA must be in the right subtree.`,
+      })
+      cur = node.right
+    } else {
+      lcaId = cur
+      frames.push({
+        kind: 'found',
+        line: 8,
+        current: cur,
+        stack: [...path],
+        carries: [...path],
+        lca: cur,
+        title: `LCA = ${val}`,
+        note: `${p} and ${q} fall on different sides of ${val} (or one equals it) → ${val} is the lowest common ancestor.`,
+      })
+      break
+    }
+  }
+
+  frames.push({
+    kind: 'done',
+    line: lcaId !== null ? 8 : 11,
+    current: null,
+    stack: [],
+    carries: [...path],
+    lca: lcaId,
+    title: lcaId !== null ? `LCA = ${byId.get(lcaId)!.val}` : 'No LCA',
+    note:
+      lcaId !== null
+        ? `Done — the lowest common ancestor is ${byId.get(lcaId)!.val}.`
+        : `Walked off the tree without locating both ${p} and ${q}.`,
+  })
+
+  return { frames, finalId: lcaId }
+}
+
+function buildFramesGeneral(
   nodes: TNode[],
   rootId: number | null,
   p: number,
@@ -149,9 +271,10 @@ function buildFrames(
 }
 
 export default function LowestCommonAncestorViz() {
-  const [input, setInput] = useState(PRESETS[0].tree)
-  const [pText, setPText] = useState(PRESETS[0].p)
-  const [qText, setQText] = useState(PRESETS[0].q)
+  const [approach, setApproach] = useState<Approach>('general')
+  const [input, setInput] = useState(GENERAL_PRESETS[0].tree)
+  const [pText, setPText] = useState(GENERAL_PRESETS[0].p)
+  const [qText, setQText] = useState(GENERAL_PRESETS[0].q)
 
   const parsed = useMemo(() => parseTree(input), [input])
   const nodeValues = useMemo(
@@ -166,10 +289,26 @@ export default function LowestCommonAncestorViz() {
     : (nodeValues[1] ?? nodeValues[0] ?? 0)
 
   const { frames } = useMemo(
-    () => buildFrames(parsed.nodes, parsed.rootId, p, q),
-    [parsed, p, q],
+    () =>
+      approach === 'bst'
+        ? buildFramesBst(parsed.nodes, parsed.rootId, p, q)
+        : buildFramesGeneral(parsed.nodes, parsed.rootId, p, q),
+    [approach, parsed, p, q],
   )
   const [i, setI] = useState(0)
+
+  const treeIsBst = useMemo(() => isBST(parsed.nodes, parsed.rootId), [parsed])
+  const CODE = approach === 'bst' ? CODE_BST : CODE_GENERAL
+  const presets = PRESETS[approach]
+
+  const changeApproach = useCallback((a: Approach) => {
+    setApproach(a)
+    const pr = PRESETS[a][0]
+    setInput(pr.tree)
+    setPText(pr.p)
+    setQText(pr.q)
+    setI(0)
+  }, [])
 
   const changeInput = useCallback((v: string) => {
     setInput(v.replace(/[^0-9,\s\-nul]/gi, '').slice(0, 80))
@@ -230,6 +369,38 @@ export default function LowestCommonAncestorViz() {
         .lca-btn:active{transform:translateY(1px)} .lca-btn:disabled{opacity:.35;cursor:not-allowed}
         .lca-btn:focus-visible{outline:2px solid ${C.ink};outline-offset:2px}`}</style>
 
+      {/* Approach toggle */}
+      <div style={{ display: 'flex', gap: 0, marginBottom: 14, flexWrap: 'wrap' }}>
+        {(
+          [
+            ['general', 'Any binary tree'],
+            ['bst', 'BST (iterative)'],
+          ] as const
+        ).map(([a, label], idx) => {
+          const active = approach === a
+          return (
+            <button
+              key={a}
+              className="lca-btn"
+              onClick={() => changeApproach(a)}
+              style={{
+                fontFamily: MONO,
+                fontWeight: 700,
+                fontSize: 13,
+                padding: '8px 14px',
+                border: `1.5px solid ${C.ink}`,
+                borderRadius: idx === 0 ? '6px 0 0 6px' : '0 6px 6px 0',
+                marginLeft: idx === 0 ? 0 : -1.5,
+                background: active ? C.ink : C.paper,
+                color: active ? C.paper : C.ink,
+              }}
+            >
+              {label}
+            </button>
+          )
+        })}
+      </div>
+
       {/* Editable input */}
       <div style={{ marginBottom: 6 }}>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -272,7 +443,7 @@ export default function LowestCommonAncestorViz() {
           </select>
           <span style={{ flexBasis: '100%', height: 0 }} />
           <span style={{ fontFamily: MONO, fontSize: 11, color: C.slate }}>presets:</span>
-          {PRESETS.map((pr) => {
+          {presets.map((pr) => {
             const active =
               input.replace(/\s/g, '') === pr.tree.replace(/\s/g, '') &&
               String(p) === pr.p &&
@@ -302,6 +473,25 @@ export default function LowestCommonAncestorViz() {
           LeetCode array format · p and q are node values
         </div>
       </div>
+
+      {approach === 'bst' && parsed.rootId !== null && !treeIsBst && (
+        <div
+          style={{
+            border: `1.5px solid ${C.signal}`,
+            background: 'rgba(224,83,58,0.08)',
+            color: C.ink,
+            borderRadius: 6,
+            padding: '10px 12px',
+            marginBottom: 16,
+            fontSize: 13,
+            lineHeight: 1.5,
+          }}
+        >
+          <b style={{ fontFamily: MONO, color: C.signal }}>Heads up:</b> this tree isn’t a valid BST,
+          so the iterative method can give a wrong answer. Pick a BST preset or switch to “Any binary
+          tree”.
+        </div>
+      )}
 
       <div
         style={{
@@ -387,7 +577,9 @@ export default function LowestCommonAncestorViz() {
               color: C.codedim,
             }}
           >
-            <div style={{ marginBottom: 4 }}>call stack (root → current)</div>
+            <div style={{ marginBottom: 4 }}>
+              {approach === 'bst' ? 'path (root → current)' : 'call stack (root → current)'}
+            </div>
             <div style={{ color: C.codeink, fontWeight: 700 }}>
               {f.stack.length === 0
                 ? '—'
@@ -479,7 +671,7 @@ export default function LowestCommonAncestorViz() {
           >
             <Swatch color={C.trace} label="p / q" />
             <Swatch color={C.signal} label="visiting" />
-            <Swatch color="#D9E6D9" label="contains a target" />
+            <Swatch color="#D9E6D9" label={approach === 'bst' ? 'path walked' : 'contains a target'} />
             <Swatch color={C.go} label="LCA" />
           </div>
 
