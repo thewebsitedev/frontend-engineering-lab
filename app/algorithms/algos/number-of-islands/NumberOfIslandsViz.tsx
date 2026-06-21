@@ -357,8 +357,9 @@ export default function NumberOfIslandsViz() {
                     key={`${r}-${c}`}
                     className="ni-cell"
                     onClick={() => toggle(r, c)}
-                    title={`(${r}, ${c}) — click to toggle`}
+                    title={`(${r}, ${c})${id !== null ? ` — island #${id}` : ''} · click to toggle`}
                     style={{
+                      position: 'relative',
                       width: 40,
                       height: 40,
                       borderRadius: 6,
@@ -373,6 +374,27 @@ export default function NumberOfIslandsViz() {
                     }}
                   >
                     {label}
+                    {id !== null && (
+                      <span
+                        style={{
+                          position: 'absolute',
+                          top: -7,
+                          right: -7,
+                          minWidth: 16,
+                          height: 16,
+                          padding: '0 3px',
+                          borderRadius: 8,
+                          background: C.ink,
+                          color: C.paper,
+                          fontSize: 10,
+                          lineHeight: '16px',
+                          textAlign: 'center',
+                          border: `1px solid ${C.paper}`,
+                        }}
+                      >
+                        {id}
+                      </span>
+                    )}
                   </button>
                 )
               }),

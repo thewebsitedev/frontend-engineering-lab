@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useCallback } from 'react'
 import { C, MONO } from '../../theme'
+import { type TNode, parseTree, layout } from '../../lib/tree'
 
 const PRESETS: { name: string; text: string }[] = [
   { name: 'classic', text: '3,9,20,null,null,15,7' },
@@ -29,47 +30,6 @@ const CODE = [
   { ln: 15, t: '  return result;' },
   { ln: 16, t: '}' },
 ]
-
-type TNode = { id: number; val: number; idx: number; left: number | null; right: number | null }
-
-function parseTree(text: string): { nodes: TNode[]; rootId: number | null } {
-  const vals = text.split(',').map((t) => {
-    const s = t.trim().toLowerCase()
-    if (s === '' || s === 'null') return null
-    const n = Number(s)
-    return Number.isNaN(n) ? null : n
-  })
-  const nodes: TNode[] = []
-  if (!vals.length || vals[0] === null) return { nodes, rootId: null }
-
-  let id = 0
-  const root: TNode = { id: id++, val: vals[0]!, idx: 0, left: null, right: null }
-  nodes.push(root)
-  const queue: TNode[] = [root]
-  let i = 1
-  while (queue.length && i < vals.length) {
-    const node = queue.shift()!
-    for (const side of ['left', 'right'] as const) {
-      if (i >= vals.length) break
-      const v = vals[i++]
-      if (v !== null) {
-        const child: TNode = {
-          id: id++,
-          val: v,
-          idx: side === 'left' ? node.idx * 2 + 1 : node.idx * 2 + 2,
-          left: null,
-          right: null,
-        }
-        node[side] = child.id
-        nodes.push(child)
-        queue.push(child)
-      }
-    }
-  }
-  return { nodes, rootId: root.id }
-}
-
-const depthOf = (idx: number) => Math.floor(Math.log2(idx + 1))
 
 type Frame = {
   kind: string
@@ -206,15 +166,7 @@ export default function BinaryTreeLevelOrderViz() {
   const byId = useMemo(() => new Map(parsed.nodes.map((n) => [n.id, n])), [parsed])
 
   // layout
-  const maxDepth = parsed.nodes.reduce((m, n) => Math.max(m, depthOf(n.idx)), 0)
-  const W = Math.max(360, 2 ** maxDepth * 46)
-  const H = (maxDepth + 1) * 72
-  const pos = (idx: number) => {
-    const d = depthOf(idx)
-    const slots = 2 ** d
-    const p = idx - (2 ** d - 1)
-    return { x: ((p + 0.5) / slots) * W, y: 36 + d * 72 }
-  }
+  const { W, H, pos } = useMemo(() => layout(parsed.nodes), [parsed])
 
   const statusOf = (id: number) => {
     if (f.currentId === id) return 'current'

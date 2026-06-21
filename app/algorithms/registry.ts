@@ -5,6 +5,7 @@ import GroupAnagramsViz from './algos/group-anagrams/GroupAnagramsViz'
 import ValidParenthesesViz from './algos/valid-parentheses/ValidParenthesesViz'
 import NumberOfIslandsViz from './algos/number-of-islands/NumberOfIslandsViz'
 import BinaryTreeLevelOrderViz from './algos/binary-tree-level-order/BinaryTreeLevelOrderViz'
+import LowestCommonAncestorViz from './algos/lowest-common-ancestor/LowestCommonAncestorViz'
 
 export const CATEGORIES: Category[] = [
   {
@@ -552,6 +553,86 @@ public:
             result.push_back(level);
         }
         return result;
+    }
+};
+`,
+    },
+  },
+
+  {
+    slug: 'lowest-common-ancestor',
+    category: 'trees',
+    title: 'Lowest Common Ancestor of a Binary Tree',
+    difficulty: 'Medium',
+    blurb: 'Find the deepest node that has both target nodes as descendants.',
+    tags: ['LeetCode 236', 'DFS', 'Recursion'],
+    statement:
+      'Given the root of a binary tree and two nodes p and q, return their lowest common ancestor (LCA): the deepest node that has both p and q as descendants. A node may be a descendant of itself.',
+    intuition: [
+      'Solve it bottom-up: ask each node “does my subtree contain p or q?”',
+      'A call returns a non-null signal if a target is found at or below that node.',
+      'If a node hears back from BOTH its left and right subtrees, the two targets first meet here — this node is the LCA.',
+      'If only one side reports a target, pass that signal straight up; the meeting point is higher.',
+    ],
+    steps: [
+      'If the node is null or is one of the targets, return it.',
+      'Recurse into the left and right children.',
+      'If both recursive calls return non-null, the current node is the LCA.',
+      'Otherwise return whichever side was non-null (or null if neither).',
+    ],
+    complexity: {
+      time: 'O(n) — each node is visited once.',
+      space: 'O(h) for the recursion stack, where h is the tree height.',
+    },
+    Visualizer: LowestCommonAncestorViz,
+    code: {
+      py: `def lowestCommonAncestor(root, p, q):
+    if not root or root is p or root is q:
+        return root
+    left = lowestCommonAncestor(root.left, p, q)
+    right = lowestCommonAncestor(root.right, p, q)
+    if left and right:
+        return root
+    return left or right
+`,
+      js: `function lowestCommonAncestor(root, p, q) {
+  if (!root || root === p || root === q) return root;
+  const left = lowestCommonAncestor(root.left, p, q);
+  const right = lowestCommonAncestor(root.right, p, q);
+  if (left && right) return root;
+  return left || right;
+}
+`,
+      ts: `function lowestCommonAncestor(
+  root: TreeNode | null,
+  p: TreeNode,
+  q: TreeNode,
+): TreeNode | null {
+  if (!root || root === p || root === q) return root;
+  const left = lowestCommonAncestor(root.left, p, q);
+  const right = lowestCommonAncestor(root.right, p, q);
+  if (left && right) return root;
+  return left ?? right;
+}
+`,
+      java: `class Solution {
+    public TreeNode lowestCommonAncestor(TreeNode root, TreeNode p, TreeNode q) {
+        if (root == null || root == p || root == q) return root;
+        TreeNode left = lowestCommonAncestor(root.left, p, q);
+        TreeNode right = lowestCommonAncestor(root.right, p, q);
+        if (left != null && right != null) return root;
+        return left != null ? left : right;
+    }
+}
+`,
+      cpp: `class Solution {
+public:
+    TreeNode* lowestCommonAncestor(TreeNode* root, TreeNode* p, TreeNode* q) {
+        if (!root || root == p || root == q) return root;
+        TreeNode* left = lowestCommonAncestor(root->left, p, q);
+        TreeNode* right = lowestCommonAncestor(root->right, p, q);
+        if (left && right) return root;
+        return left ? left : right;
     }
 };
 `,
