@@ -1,5 +1,6 @@
 import type { Algorithm, Category } from './types'
 import RedundantConnectionViz from './algos/redundant-connection/RedundantConnectionViz'
+import TwoSumViz from './algos/two-sum/TwoSumViz'
 
 export const CATEGORIES: Category[] = [
   {
@@ -173,6 +174,7 @@ public:
       time: 'O(n) — one pass over the array.',
       space: 'O(n) for the hash map.',
     },
+    Visualizer: TwoSumViz,
     code: {
       py: `def twoSum(nums, target):
     seen = {}  # value -> index
