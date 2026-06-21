@@ -3,8 +3,8 @@
 import { useState, useMemo, useCallback } from 'react'
 import { C, MONO } from '../../theme'
 
-const S = '([{}])'
 const PAIRS: Record<string, string> = { ')': '(', ']': '[', '}': '{' }
+const PRESETS = ['([{}])', '()[]{}', '([)]', '(((']
 
 // JS source shown in the trace panel (matches the default language).
 const CODE = [
@@ -35,7 +35,7 @@ type Frame = {
   note: string
 }
 
-function buildFrames(): { frames: Frame[]; valid: boolean } {
+function buildFrames(s: string): { frames: Frame[]; valid: boolean } {
   const frames: Frame[] = []
   const stack: string[] = []
 
@@ -54,8 +54,8 @@ function buildFrames(): { frames: Frame[]; valid: boolean } {
 
   let valid: boolean | null = null
 
-  for (let i = 0; i < S.length; i++) {
-    const ch = S[i]
+  for (let i = 0; i < s.length; i++) {
+    const ch = s[i]
 
     frames.push({
       kind: 'consider',
@@ -144,8 +144,16 @@ function buildFrames(): { frames: Frame[]; valid: boolean } {
 }
 
 export default function ValidParenthesesViz() {
-  const { frames, valid } = useMemo(() => buildFrames(), [])
+  const [input, setInput] = useState('([{}])')
+  const { frames, valid } = useMemo(() => buildFrames(input), [input])
   const [i, setI] = useState(0)
+
+  // A new input string is a new problem — set it and rewind in one update.
+  const changeInput = useCallback((v: string) => {
+    setInput(v)
+    setI(0)
+  }, [])
+
   const f = frames[i]
   const atEnd = i === frames.length - 1
   const next = useCallback(
@@ -162,9 +170,62 @@ export default function ValidParenthesesViz() {
         .vp-btn:active{transform:translateY(1px)} .vp-btn:disabled{opacity:.35;cursor:not-allowed}
         .vp-btn:focus-visible{outline:2px solid ${C.ink};outline-offset:2px}`}</style>
 
-      {/* Input header */}
-      <div style={{ fontFamily: MONO, fontSize: 13, color: C.slate, marginBottom: 14 }}>
-        s = &quot;{S}&quot;
+      {/* Editable input */}
+      <div style={{ marginBottom: 16 }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+          <label style={{ fontFamily: MONO, fontSize: 14, fontWeight: 700 }}>s =</label>
+          <input
+            value={input}
+            spellCheck={false}
+            placeholder="type brackets…"
+            onChange={(e) =>
+              changeInput(e.target.value.replace(/[^()[\]{}]/g, '').slice(0, 30))
+            }
+            style={{
+              fontFamily: MONO,
+              fontSize: 15,
+              fontWeight: 700,
+              letterSpacing: 1,
+              padding: '8px 11px',
+              border: `1.5px solid ${C.ink}`,
+              borderRadius: 6,
+              background: '#FBF9F3',
+              color: C.ink,
+              minWidth: 180,
+              outlineColor: C.signal,
+            }}
+          />
+          <span style={{ fontFamily: MONO, fontSize: 11, color: C.slate }}>
+            {'only ()[]{} · max 30'}
+          </span>
+        </div>
+        <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
+          <span style={{ fontFamily: MONO, fontSize: 11, color: C.slate, alignSelf: 'center' }}>
+            try:
+          </span>
+          {PRESETS.map((p) => {
+            const active = input === p
+            return (
+              <button
+                key={p}
+                className="vp-btn"
+                onClick={() => changeInput(p)}
+                style={{
+                  fontFamily: MONO,
+                  fontWeight: 700,
+                  fontSize: 12,
+                  padding: '4px 9px',
+                  borderRadius: 4,
+                  border: `1.5px solid ${active ? C.signal : C.wire}`,
+                  background: active ? C.signal : C.paper,
+                  color: active ? C.paper : C.ink,
+                }}
+              >
+                {p}
+              </button>
+            )
+          })}
+        </div>
       </div>
 
       <div
@@ -289,7 +350,7 @@ export default function ValidParenthesesViz() {
             string
           </div>
           <div style={{ display: 'flex', gap: 6, marginBottom: 16, flexWrap: 'wrap' }}>
-            {S.split('').map((ch, idx) => {
+            {input.split('').map((ch, idx) => {
               const isCurrent = f.i === idx
               const isDone = f.i === null ? true : idx < f.i
               let bg = '#FBF9F3'
