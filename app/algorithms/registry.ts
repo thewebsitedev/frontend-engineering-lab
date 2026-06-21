@@ -2,6 +2,7 @@ import type { Algorithm, Category } from './types'
 import RedundantConnectionViz from './algos/redundant-connection/RedundantConnectionViz'
 import TwoSumViz from './algos/two-sum/TwoSumViz'
 import GroupAnagramsViz from './algos/group-anagrams/GroupAnagramsViz'
+import ValidParenthesesViz from './algos/valid-parentheses/ValidParenthesesViz'
 
 export const CATEGORIES: Category[] = [
   {
@@ -13,6 +14,11 @@ export const CATEGORIES: Category[] = [
     slug: 'arrays-hashing',
     name: 'Arrays & Hashing',
     blurb: 'Lookups, frequency maps, and the bread-and-butter of interviews.',
+  },
+  {
+    slug: 'stack',
+    name: 'Stack',
+    blurb: 'LIFO problems: bracket matching, spans, and nearest-element queries.',
   },
   {
     slug: 'graphs',
@@ -313,6 +319,105 @@ public:
         vector<vector<string>> result;
         for (auto& [key, group] : groups) result.push_back(group);
         return result;
+    }
+};
+`,
+    },
+  },
+
+  {
+    slug: 'valid-parentheses',
+    category: 'stack',
+    title: 'Valid Parentheses',
+    difficulty: 'Easy',
+    blurb: 'Decide whether every bracket is correctly opened and closed.',
+    tags: ['LeetCode 20', 'Stack'],
+    statement:
+      "Given a string s containing only the characters '(', ')', '{', '}', '[' and ']', determine if the input is valid. Brackets must be closed by the same type and in the correct order, so every closing bracket matches the most recently opened one.",
+    intuition: [
+      'The most recently opened bracket must be the first one closed — that “last in, first out” rule is exactly a stack.',
+      'Push every opening bracket. When a closing bracket arrives, the top of the stack must be its matching opener.',
+      'If the top does not match (or the stack is empty), the string is invalid.',
+      'After scanning everything, a valid string leaves the stack empty — nothing was left unclosed.',
+    ],
+    steps: [
+      'Create an empty stack and a map from each closing bracket to its opener.',
+      'For each character: if it is a closing bracket, pop the stack and check it equals the expected opener — otherwise return false.',
+      'If it is an opening bracket, push it.',
+      'At the end, return true only if the stack is empty.',
+    ],
+    complexity: {
+      time: 'O(n) — each character is pushed/popped at most once.',
+      space: 'O(n) for the stack in the worst case (all opening brackets).',
+    },
+    Visualizer: ValidParenthesesViz,
+    code: {
+      py: `def isValid(s):
+    stack = []
+    pairs = {')': '(', ']': '[', '}': '{'}
+    for ch in s:
+        if ch in pairs:
+            if not stack or stack.pop() != pairs[ch]:
+                return False
+        else:
+            stack.append(ch)
+    return not stack
+`,
+      js: `function isValid(s) {
+  const stack = [];
+  const pairs = { ')': '(', ']': '[', '}': '{' };
+  for (const ch of s) {
+    if (ch in pairs) {
+      if (stack.pop() !== pairs[ch]) return false;
+    } else {
+      stack.push(ch);
+    }
+  }
+  return stack.length === 0;
+}
+`,
+      ts: `function isValid(s: string): boolean {
+  const stack: string[] = [];
+  const pairs: Record<string, string> = { ')': '(', ']': '[', '}': '{' };
+  for (const ch of s) {
+    if (ch in pairs) {
+      if (stack.pop() !== pairs[ch]) return false;
+    } else {
+      stack.push(ch);
+    }
+  }
+  return stack.length === 0;
+}
+`,
+      java: `class Solution {
+    public boolean isValid(String s) {
+        Deque<Character> stack = new ArrayDeque<>();
+        Map<Character, Character> pairs = Map.of(')', '(', ']', '[', '}', '{');
+        for (char ch : s.toCharArray()) {
+            if (pairs.containsKey(ch)) {
+                if (stack.isEmpty() || stack.pop() != pairs.get(ch)) return false;
+            } else {
+                stack.push(ch);
+            }
+        }
+        return stack.isEmpty();
+    }
+}
+`,
+      cpp: `class Solution {
+public:
+    bool isValid(string s) {
+        stack<char> st;
+        unordered_map<char, char> pairs{{')', '('}, {']', '['}, {'}', '{'}};
+        for (char ch : s) {
+            if (pairs.count(ch)) {
+                if (st.empty() || st.top() != pairs[ch]) return false;
+                st.pop();
+            } else {
+                st.push(ch);
+            }
+        }
+        return st.empty();
     }
 };
 `,
