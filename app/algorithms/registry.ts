@@ -8,6 +8,7 @@ import BinaryTreeLevelOrderViz from './algos/binary-tree-level-order/BinaryTreeL
 import LowestCommonAncestorViz from './algos/lowest-common-ancestor/LowestCommonAncestorViz'
 import TopKFrequentViz from './algos/top-k-frequent/TopKFrequentViz'
 import MergeIntervalsViz from './algos/merge-intervals/MergeIntervalsViz'
+import CourseScheduleViz from './algos/course-schedule/CourseScheduleViz'
 
 // Lowest Common Ancestor has two notable solutions, shared below.
 const LCA_RECURSIVE: Record<Lang, string> = {
@@ -964,6 +965,144 @@ public:
         }
         res.push_back(cur);
         return res;
+    }
+};
+`,
+    },
+  },
+
+  {
+    slug: 'course-schedule',
+    category: 'graphs',
+    title: 'Course Schedule',
+    difficulty: 'Medium',
+    blurb: 'Decide if all courses can be finished — i.e. the prereq graph has no cycle.',
+    tags: ['LeetCode 207', 'Topological Sort', 'BFS'],
+    statement:
+      'There are numCourses courses labeled 0..numCourses-1. prerequisites[i] = [a, b] means you must take course b before course a. Return true if you can finish all courses, otherwise false.',
+    intuition: [
+      'Treat each course as a node and each prerequisite [a, b] as an arrow b → a (“take b before a”). You can finish everything exactly when these arrows contain no cycle.',
+      'For each course, count how many prerequisites it still needs — its indegree. A course with indegree 0 has nothing blocking it, so it can be taken right now.',
+      'Take any ready course and “complete” it: that removes one prerequisite from every course that depended on it. Some of those may drop to indegree 0 and become ready themselves.',
+      'Keep taking ready courses. If you take all of them, there was no cycle → true. If you get stuck with courses whose indegree never reaches 0, they depend on each other in a cycle → false.',
+    ],
+    steps: [
+      'Build the graph: for each [a, b] add edge b → a and increment indegree[a].',
+      'Put every course with indegree 0 into a queue.',
+      'Pop a course, count it as taken, and decrement the indegree of each course it points to; if any reaches 0, enqueue it.',
+      'Repeat until the queue is empty.',
+      'Return true if the number taken equals numCourses (otherwise a cycle blocked some).',
+    ],
+    complexity: {
+      time: 'O(V + E) — each course and prerequisite is processed once.',
+      space: 'O(V + E) for the adjacency list, indegree array, and queue.',
+    },
+    Visualizer: CourseScheduleViz,
+    code: {
+      py: `from collections import deque
+
+def canFinish(numCourses, prerequisites):
+    adj = [[] for _ in range(numCourses)]
+    indeg = [0] * numCourses
+    for a, b in prerequisites:
+        adj[b].append(a)   # b is a prerequisite of a
+        indeg[a] += 1
+    queue = deque([c for c in range(numCourses) if indeg[c] == 0])
+    taken = 0
+    while queue:
+        u = queue.popleft()
+        taken += 1
+        for v in adj[u]:
+            indeg[v] -= 1
+            if indeg[v] == 0:
+                queue.append(v)
+    return taken == numCourses
+`,
+      js: `function canFinish(numCourses, prerequisites) {
+  const adj = Array.from({ length: numCourses }, () => []);
+  const indeg = new Array(numCourses).fill(0);
+  for (const [a, b] of prerequisites) {
+    adj[b].push(a);    // b is a prerequisite of a
+    indeg[a]++;
+  }
+  const queue = [];
+  for (let c = 0; c < numCourses; c++) if (indeg[c] === 0) queue.push(c);
+  let taken = 0;
+  while (queue.length) {
+    const u = queue.shift();
+    taken++;
+    for (const v of adj[u]) {
+      indeg[v]--;
+      if (indeg[v] === 0) queue.push(v);
+    }
+  }
+  return taken === numCourses;
+}
+`,
+      ts: `function canFinish(numCourses: number, prerequisites: number[][]): boolean {
+  const adj: number[][] = Array.from({ length: numCourses }, () => []);
+  const indeg = new Array(numCourses).fill(0);
+  for (const [a, b] of prerequisites) {
+    adj[b].push(a);    // b is a prerequisite of a
+    indeg[a]++;
+  }
+  const queue: number[] = [];
+  for (let c = 0; c < numCourses; c++) if (indeg[c] === 0) queue.push(c);
+  let taken = 0;
+  while (queue.length) {
+    const u = queue.shift()!;
+    taken++;
+    for (const v of adj[u]) {
+      indeg[v]--;
+      if (indeg[v] === 0) queue.push(v);
+    }
+  }
+  return taken === numCourses;
+}
+`,
+      java: `class Solution {
+    public boolean canFinish(int numCourses, int[][] prerequisites) {
+        List<List<Integer>> adj = new ArrayList<>();
+        for (int i = 0; i < numCourses; i++) adj.add(new ArrayList<>());
+        int[] indeg = new int[numCourses];
+        for (int[] p : prerequisites) {
+            adj.get(p[1]).add(p[0]);   // p[1] is a prerequisite of p[0]
+            indeg[p[0]]++;
+        }
+        Queue<Integer> queue = new LinkedList<>();
+        for (int c = 0; c < numCourses; c++) if (indeg[c] == 0) queue.offer(c);
+        int taken = 0;
+        while (!queue.isEmpty()) {
+            int u = queue.poll();
+            taken++;
+            for (int v : adj.get(u)) {
+                if (--indeg[v] == 0) queue.offer(v);
+            }
+        }
+        return taken == numCourses;
+    }
+}
+`,
+      cpp: `class Solution {
+public:
+    bool canFinish(int numCourses, vector<vector<int>>& prerequisites) {
+        vector<vector<int>> adj(numCourses);
+        vector<int> indeg(numCourses, 0);
+        for (auto& p : prerequisites) {
+            adj[p[1]].push_back(p[0]);   // p[1] is a prerequisite of p[0]
+            indeg[p[0]]++;
+        }
+        queue<int> q;
+        for (int c = 0; c < numCourses; c++) if (indeg[c] == 0) q.push(c);
+        int taken = 0;
+        while (!q.empty()) {
+            int u = q.front(); q.pop();
+            taken++;
+            for (int v : adj[u]) {
+                if (--indeg[v] == 0) q.push(v);
+            }
+        }
+        return taken == numCourses;
     }
 };
 `,
