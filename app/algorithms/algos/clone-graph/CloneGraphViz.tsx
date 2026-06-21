@@ -494,6 +494,28 @@ export default function CloneGraphViz() {
         })}
       </div>
 
+      {/* Graphs side-by-side (original vs clone reads as a left-right diff) */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)', gap: 18, marginBottom: 12 }}>
+        {[
+          { title: 'original (input)', nodes: Array.from({ length: n }, (_, k) => k + 1), edges: originalEdges, primed: false },
+          { title: 'clone (being built)', nodes: f.cloned, edges: f.cloneEdges, primed: true },
+        ].map((g) => (
+          <div key={g.title}>
+            <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: 1, textTransform: 'uppercase', color: C.slate, marginBottom: 4 }}>
+              {g.title}
+            </div>
+            <div style={{ border: `1.5px solid ${C.wire}`, background: '#FBF9F3', borderRadius: 6 }}>{renderGraph(g.nodes, g.edges, g.primed)}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* legend */}
+      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', fontFamily: MONO, fontSize: 11, color: C.slate, marginBottom: 16 }}>
+        <Swatch color={C.signal} label="curr" />
+        <Swatch color={C.trace} label="neighbour" />
+        <Swatch color={C.go} label="cloned" />
+      </div>
+
       <div
         style={{
           display: 'grid',
@@ -610,26 +632,8 @@ export default function CloneGraphViz() {
           </div>
         </div>
 
-        {/* RIGHT: graphs + track + narration */}
+        {/* RIGHT: track + narration */}
         <div>
-          {[
-            { title: 'original (input)', nodes: Array.from({ length: n }, (_, k) => k + 1), edges: originalEdges, primed: false },
-            { title: 'clone (being built)', nodes: f.cloned, edges: f.cloneEdges, primed: true },
-          ].map((g) => (
-            <div key={g.title} style={{ marginBottom: 10 }}>
-              <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: 1, textTransform: 'uppercase', color: C.slate, marginBottom: 4 }}>
-                {g.title}
-              </div>
-              <div style={{ border: `1.5px solid ${C.wire}`, background: '#FBF9F3', borderRadius: 6 }}>{renderGraph(g.nodes, g.edges, g.primed)}</div>
-            </div>
-          ))}
-
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', fontFamily: MONO, fontSize: 11, color: C.slate, marginBottom: 12 }}>
-            <Swatch color={C.signal} label="curr" />
-            <Swatch color={C.trace} label="neighbour" />
-            <Swatch color={C.go} label="cloned" />
-          </div>
-
           {/* queue / call stack */}
           <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: 1, textTransform: 'uppercase', color: C.slate, marginBottom: 6 }}>
             {trackLabel}
