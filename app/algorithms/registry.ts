@@ -9,6 +9,7 @@ import LowestCommonAncestorViz from './algos/lowest-common-ancestor/LowestCommon
 import TopKFrequentViz from './algos/top-k-frequent/TopKFrequentViz'
 import MergeIntervalsViz from './algos/merge-intervals/MergeIntervalsViz'
 import CourseScheduleViz from './algos/course-schedule/CourseScheduleViz'
+import CloneGraphViz from './algos/clone-graph/CloneGraphViz'
 
 // Lowest Common Ancestor has two notable solutions, shared below.
 const LCA_RECURSIVE: Record<Lang, string> = {
@@ -132,6 +133,181 @@ public:
             }
         }
         return nullptr;
+    }
+};
+`,
+}
+
+// Clone Graph has two standard solutions; the visualizer animates the BFS version.
+const CLONE_BFS: Record<Lang, string> = {
+  py: `from collections import deque
+
+def cloneGraph(node):
+    if not node:
+        return None
+    clones = {node: Node(node.val)}   # original -> copy
+    queue = deque([node])
+    while queue:
+        curr = queue.popleft()
+        for nei in curr.neighbors:
+            if nei not in clones:
+                clones[nei] = Node(nei.val)
+                queue.append(nei)
+            clones[curr].neighbors.append(clones[nei])
+    return clones[node]
+`,
+  js: `function cloneGraph(node) {
+  if (!node) return null;
+  const clones = new Map();              // original -> copy
+  clones.set(node, new Node(node.val));
+  const queue = [node];
+  while (queue.length) {
+    const curr = queue.shift();
+    for (const nei of curr.neighbors) {
+      if (!clones.has(nei)) {
+        clones.set(nei, new Node(nei.val));
+        queue.push(nei);
+      }
+      clones.get(curr).neighbors.push(clones.get(nei));
+    }
+  }
+  return clones.get(node);
+}
+`,
+  ts: `function cloneGraph(node: Node | null): Node | null {
+  if (!node) return null;
+  const clones = new Map<Node, Node>();   // original -> copy
+  clones.set(node, new Node(node.val));
+  const queue: Node[] = [node];
+  while (queue.length) {
+    const curr = queue.shift()!;
+    for (const nei of curr.neighbors) {
+      if (!clones.has(nei)) {
+        clones.set(nei, new Node(nei.val));
+        queue.push(nei);
+      }
+      clones.get(curr)!.neighbors.push(clones.get(nei)!);
+    }
+  }
+  return clones.get(node)!;
+}
+`,
+  java: `class Solution {
+    public Node cloneGraph(Node node) {
+        if (node == null) return null;
+        Map<Node, Node> clones = new HashMap<>();   // original -> copy
+        clones.put(node, new Node(node.val));
+        Queue<Node> queue = new LinkedList<>();
+        queue.offer(node);
+        while (!queue.isEmpty()) {
+            Node curr = queue.poll();
+            for (Node nei : curr.neighbors) {
+                if (!clones.containsKey(nei)) {
+                    clones.put(nei, new Node(nei.val));
+                    queue.offer(nei);
+                }
+                clones.get(curr).neighbors.add(clones.get(nei));
+            }
+        }
+        return clones.get(node);
+    }
+}
+`,
+  cpp: `class Solution {
+public:
+    Node* cloneGraph(Node* node) {
+        if (!node) return nullptr;
+        unordered_map<Node*, Node*> clones;   // original -> copy
+        clones[node] = new Node(node->val);
+        queue<Node*> q;
+        q.push(node);
+        while (!q.empty()) {
+            Node* curr = q.front(); q.pop();
+            for (Node* nei : curr->neighbors) {
+                if (!clones.count(nei)) {
+                    clones[nei] = new Node(nei->val);
+                    q.push(nei);
+                }
+                clones[curr]->neighbors.push_back(clones[nei]);
+            }
+        }
+        return clones[node];
+    }
+};
+`,
+}
+
+const CLONE_DFS: Record<Lang, string> = {
+  py: `def cloneGraph(node):
+    clones = {}   # original -> copy
+
+    def dfs(curr):
+        if curr in clones:
+            return clones[curr]
+        copy = Node(curr.val)
+        clones[curr] = copy           # record before recursing (handles cycles)
+        for nei in curr.neighbors:
+            copy.neighbors.append(dfs(nei))
+        return copy
+
+    return dfs(node) if node else None
+`,
+  js: `function cloneGraph(node) {
+  const clones = new Map();        // original -> copy
+  function dfs(curr) {
+    if (clones.has(curr)) return clones.get(curr);
+    const copy = new Node(curr.val);
+    clones.set(curr, copy);        // record before recursing (handles cycles)
+    for (const nei of curr.neighbors) {
+      copy.neighbors.push(dfs(nei));
+    }
+    return copy;
+  }
+  return node ? dfs(node) : null;
+}
+`,
+  ts: `function cloneGraph(node: Node | null): Node | null {
+  const clones = new Map<Node, Node>();   // original -> copy
+  function dfs(curr: Node): Node {
+    const existing = clones.get(curr);
+    if (existing) return existing;
+    const copy = new Node(curr.val);
+    clones.set(curr, copy);               // record before recursing (handles cycles)
+    for (const nei of curr.neighbors) {
+      copy.neighbors.push(dfs(nei));
+    }
+    return copy;
+  }
+  return node ? dfs(node) : null;
+}
+`,
+  java: `class Solution {
+    private Map<Node, Node> clones = new HashMap<>();   // original -> copy
+
+    public Node cloneGraph(Node node) {
+        if (node == null) return null;
+        if (clones.containsKey(node)) return clones.get(node);
+        Node copy = new Node(node.val);
+        clones.put(node, copy);            // record before recursing (handles cycles)
+        for (Node nei : node.neighbors) {
+            copy.neighbors.add(cloneGraph(nei));
+        }
+        return copy;
+    }
+}
+`,
+  cpp: `class Solution {
+    unordered_map<Node*, Node*> clones;   // original -> copy
+public:
+    Node* cloneGraph(Node* node) {
+        if (!node) return nullptr;
+        if (clones.count(node)) return clones[node];
+        Node* copy = new Node(node->val);
+        clones[node] = copy;              // record before recursing (handles cycles)
+        for (Node* nei : node->neighbors) {
+            copy->neighbors.push_back(cloneGraph(nei));
+        }
+        return copy;
     }
 };
 `,
@@ -1107,6 +1283,50 @@ public:
 };
 `,
     },
+  },
+
+  {
+    slug: 'clone-graph',
+    category: 'graphs',
+    title: 'Clone Graph',
+    difficulty: 'Medium',
+    blurb: 'Make a deep copy of an undirected graph — every node and edge duplicated.',
+    tags: ['LeetCode 133', 'BFS', 'DFS', 'Hash Map'],
+    statement:
+      'You are given a reference to a node in a connected undirected graph. Each node has a value and a list of its neighbors. Return a deep copy (clone) of the graph: a brand-new set of nodes that has the same values and the same connections, sharing nothing with the original.',
+    intuition: [
+      'The hard part is not copying values — it is copying the edges without getting stuck in cycles. If you blindly follow neighbours you will clone the same node again and again forever.',
+      'Keep a map from each ORIGINAL node to its NEW copy. Before you ever follow a node’s edges, put its copy in the map. That way every node is created exactly once.',
+      'Walk the graph (BFS with a queue, or DFS with recursion). For each node you visit, look at its neighbours: clone any neighbour you have not seen, then wire the copy’s edge to the neighbour’s copy.',
+      'Because the map is checked first, revisiting an already-cloned node just reuses its copy instead of making a new one — that is what tames the cycles.',
+    ],
+    steps: [
+      'If the input node is null, return null.',
+      'Create the start node’s copy and put original → copy in a map; seed the queue (BFS) with the start node.',
+      'Pop a node. For each neighbour: if it is not in the map, clone it and enqueue it.',
+      'Connect the current node’s copy to the neighbour’s copy (rebuilding the edge).',
+      'Repeat until the queue is empty, then return the copy of the start node.',
+    ],
+    complexity: {
+      time: 'O(V + E) — each node and edge is visited once.',
+      space: 'O(V) for the map and the queue (or recursion stack).',
+    },
+    Visualizer: CloneGraphViz,
+    code: CLONE_BFS,
+    solutions: [
+      {
+        name: '1 · BFS — queue + map',
+        blurb:
+          'Clone the start node, then process the queue: for each node, clone any unseen neighbour, enqueue it, and link the copies. This is the version animated above.',
+        code: CLONE_BFS,
+      },
+      {
+        name: '2 · DFS — recursion + map',
+        blurb:
+          'Recurse from the start node. Record a node’s copy in the map BEFORE recursing into its neighbours so cycles resolve to the existing copy instead of looping forever.',
+        code: CLONE_DFS,
+      },
+    ],
   },
 
   {
