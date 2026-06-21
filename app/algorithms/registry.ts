@@ -11,6 +11,7 @@ import MergeIntervalsViz from './algos/merge-intervals/MergeIntervalsViz'
 import CourseScheduleViz from './algos/course-schedule/CourseScheduleViz'
 import CloneGraphViz from './algos/clone-graph/CloneGraphViz'
 import KClosestPointsViz from './algos/k-closest-points/KClosestPointsViz'
+import ProductExceptSelfViz from './algos/product-except-self/ProductExceptSelfViz'
 
 // Lowest Common Ancestor has two notable solutions, shared below.
 const LCA_RECURSIVE: Record<Lang, string> = {
@@ -429,6 +430,162 @@ public:
         vector<vector<int>> result;
         while (!heap.empty()) { result.push_back(heap.top().second); heap.pop(); }
         return result;
+    }
+};
+`,
+}
+
+// Product of Array Except Self: the clear two-array version and the O(1)-space two-pass.
+const PRODUCT_OPTIMAL: Record<Lang, string> = {
+  py: `def productExceptSelf(nums):
+    n = len(nums)
+    answer = [1] * n
+    prefix = 1
+    for i in range(n):
+        answer[i] = prefix          # product of everything left of i
+        prefix *= nums[i]
+    suffix = 1
+    for i in range(n - 1, -1, -1):
+        answer[i] *= suffix         # multiply in product of everything right of i
+        suffix *= nums[i]
+    return answer
+`,
+  js: `function productExceptSelf(nums) {
+  const n = nums.length;
+  const answer = new Array(n).fill(1);
+  let prefix = 1;
+  for (let i = 0; i < n; i++) {
+    answer[i] = prefix;       // product of everything left of i
+    prefix *= nums[i];
+  }
+  let suffix = 1;
+  for (let i = n - 1; i >= 0; i--) {
+    answer[i] *= suffix;      // multiply in product of everything right of i
+    suffix *= nums[i];
+  }
+  return answer;
+}
+`,
+  ts: `function productExceptSelf(nums: number[]): number[] {
+  const n = nums.length;
+  const answer = new Array(n).fill(1);
+  let prefix = 1;
+  for (let i = 0; i < n; i++) {
+    answer[i] = prefix;       // product of everything left of i
+    prefix *= nums[i];
+  }
+  let suffix = 1;
+  for (let i = n - 1; i >= 0; i--) {
+    answer[i] *= suffix;      // multiply in product of everything right of i
+    suffix *= nums[i];
+  }
+  return answer;
+}
+`,
+  java: `class Solution {
+    public int[] productExceptSelf(int[] nums) {
+        int n = nums.length;
+        int[] answer = new int[n];
+        int prefix = 1;
+        for (int i = 0; i < n; i++) {
+            answer[i] = prefix;       // product of everything left of i
+            prefix *= nums[i];
+        }
+        int suffix = 1;
+        for (int i = n - 1; i >= 0; i--) {
+            answer[i] *= suffix;      // multiply in product of everything right of i
+            suffix *= nums[i];
+        }
+        return answer;
+    }
+}
+`,
+  cpp: `class Solution {
+public:
+    vector<int> productExceptSelf(vector<int>& nums) {
+        int n = nums.size();
+        vector<int> answer(n, 1);
+        int prefix = 1;
+        for (int i = 0; i < n; i++) {
+            answer[i] = prefix;       // product of everything left of i
+            prefix *= nums[i];
+        }
+        int suffix = 1;
+        for (int i = n - 1; i >= 0; i--) {
+            answer[i] *= suffix;      // multiply in product of everything right of i
+            suffix *= nums[i];
+        }
+        return answer;
+    }
+};
+`,
+}
+
+const PRODUCT_TWO_ARRAYS: Record<Lang, string> = {
+  py: `def productExceptSelf(nums):
+    n = len(nums)
+    left = [1] * n          # left[i]  = product of everything before i
+    right = [1] * n         # right[i] = product of everything after i
+    for i in range(1, n):
+        left[i] = left[i - 1] * nums[i - 1]
+    for i in range(n - 2, -1, -1):
+        right[i] = right[i + 1] * nums[i + 1]
+    return [left[i] * right[i] for i in range(n)]
+`,
+  js: `function productExceptSelf(nums) {
+  const n = nums.length;
+  const left = new Array(n).fill(1);   // left[i]  = product before i
+  const right = new Array(n).fill(1);  // right[i] = product after i
+  for (let i = 1; i < n; i++) {
+    left[i] = left[i - 1] * nums[i - 1];
+  }
+  for (let i = n - 2; i >= 0; i--) {
+    right[i] = right[i + 1] * nums[i + 1];
+  }
+  const answer = new Array(n);
+  for (let i = 0; i < n; i++) answer[i] = left[i] * right[i];
+  return answer;
+}
+`,
+  ts: `function productExceptSelf(nums: number[]): number[] {
+  const n = nums.length;
+  const left = new Array(n).fill(1);   // left[i]  = product before i
+  const right = new Array(n).fill(1);  // right[i] = product after i
+  for (let i = 1; i < n; i++) {
+    left[i] = left[i - 1] * nums[i - 1];
+  }
+  for (let i = n - 2; i >= 0; i--) {
+    right[i] = right[i + 1] * nums[i + 1];
+  }
+  const answer = new Array(n);
+  for (let i = 0; i < n; i++) answer[i] = left[i] * right[i];
+  return answer;
+}
+`,
+  java: `class Solution {
+    public int[] productExceptSelf(int[] nums) {
+        int n = nums.length;
+        int[] left = new int[n];
+        int[] right = new int[n];
+        left[0] = 1;
+        right[n - 1] = 1;
+        for (int i = 1; i < n; i++) left[i] = left[i - 1] * nums[i - 1];
+        for (int i = n - 2; i >= 0; i--) right[i] = right[i + 1] * nums[i + 1];
+        int[] answer = new int[n];
+        for (int i = 0; i < n; i++) answer[i] = left[i] * right[i];
+        return answer;
+    }
+}
+`,
+  cpp: `class Solution {
+public:
+    vector<int> productExceptSelf(vector<int>& nums) {
+        int n = nums.size();
+        vector<int> left(n, 1), right(n, 1), answer(n);
+        for (int i = 1; i < n; i++) left[i] = left[i - 1] * nums[i - 1];
+        for (int i = n - 2; i >= 0; i--) right[i] = right[i + 1] * nums[i + 1];
+        for (int i = 0; i < n; i++) answer[i] = left[i] * right[i];
+        return answer;
     }
 };
 `,
@@ -977,6 +1134,49 @@ public:
 };
 `,
     },
+  },
+
+  {
+    slug: 'product-except-self',
+    category: 'arrays-hashing',
+    title: 'Product of Array Except Self',
+    difficulty: 'Medium',
+    blurb: 'Each answer[i] is the product of all other elements — no division, in O(n).',
+    tags: ['LeetCode 238', 'Prefix Product', 'Arrays'],
+    statement:
+      'Given an integer array nums, return an array answer such that answer[i] is equal to the product of all the elements of nums except nums[i]. The algorithm must run in O(n) time and without using the division operation.',
+    intuition: [
+      'The product of everything except nums[i] is just (product of everything to its LEFT) × (product of everything to its RIGHT). If you have both, you are done.',
+      'Build the left products in one forward pass: keep a running prefix and, before folding nums[i] in, store the prefix into answer[i].',
+      'Then sweep backward with a running suffix and multiply it into answer[i]. Now each cell holds left × right.',
+      'Why no division? Division would fail on zeros and is disallowed here. The two-pass prefix/suffix trick sidesteps it entirely.',
+    ],
+    steps: [
+      'Fill answer with 1s.',
+      'Forward pass: set answer[i] = prefix, then prefix *= nums[i].',
+      'Backward pass: multiply answer[i] *= suffix, then suffix *= nums[i].',
+      'answer now holds the product of all elements except self.',
+    ],
+    complexity: {
+      time: 'O(n) — two linear passes.',
+      space: 'O(1) extra — the output array does not count; only prefix and suffix scalars are used.',
+    },
+    Visualizer: ProductExceptSelfViz,
+    code: PRODUCT_OPTIMAL,
+    solutions: [
+      {
+        name: '1 · Prefix × suffix, O(1) extra space',
+        blurb:
+          'Store left products in answer during a forward pass, then multiply right products in during a backward pass. This is the version animated above.',
+        code: PRODUCT_OPTIMAL,
+      },
+      {
+        name: '2 · Two helper arrays (easier to read)',
+        blurb:
+          'Keep explicit left[] and right[] arrays, then multiply them position by position. Same O(n) time but O(n) extra space — a clearer stepping stone to the optimal version.',
+        code: PRODUCT_TWO_ARRAYS,
+      },
+    ],
   },
 
   {
