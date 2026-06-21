@@ -5,8 +5,6 @@ services:
     restart: always
     ports:
       - "3001:3000"
-    networks:
-      - web
 
   app-green:
     build: .
@@ -14,9 +12,3 @@ services:
     restart: always
     ports:
       - "3002:3000"
-    networks:
-      - web
-
-networks:
-  web:
-    external: true

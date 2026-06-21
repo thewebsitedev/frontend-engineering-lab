@@ -11,7 +11,7 @@ type CodeTabs = {
 // Tabbed multi-language source viewer (JS / TS / Python / Java / C++).
 // Styled like the inline code panel: dark background, mono font, line numbers.
 export default function CodeTabs({ code }: CodeTabs) {
-  const [lang, setLang] = useState<Lang>('py')
+  const [lang, setLang] = useState<Lang>('js')
   const [copied, setCopied] = useState(false)
 
   const source = code[lang] ?? ''

@@ -1,5 +1,138 @@
-import type { Algorithm, Category } from './types'
+import type { Algorithm, Category, Lang } from './types'
 import RedundantConnectionViz from './algos/redundant-connection/RedundantConnectionViz'
+import TwoSumViz from './algos/two-sum/TwoSumViz'
+import GroupAnagramsViz from './algos/group-anagrams/GroupAnagramsViz'
+import ValidParenthesesViz from './algos/valid-parentheses/ValidParenthesesViz'
+import NumberOfIslandsViz from './algos/number-of-islands/NumberOfIslandsViz'
+import BinaryTreeLevelOrderViz from './algos/binary-tree-level-order/BinaryTreeLevelOrderViz'
+import LowestCommonAncestorViz from './algos/lowest-common-ancestor/LowestCommonAncestorViz'
+
+// Lowest Common Ancestor has two notable solutions, shared below.
+const LCA_RECURSIVE: Record<Lang, string> = {
+  py: `def lowestCommonAncestor(root, p, q):
+    if not root or root is p or root is q:
+        return root
+    left = lowestCommonAncestor(root.left, p, q)
+    right = lowestCommonAncestor(root.right, p, q)
+    if left and right:
+        return root
+    return left or right
+`,
+  js: `function lowestCommonAncestor(root, p, q) {
+  if (!root || root === p || root === q) return root;
+  const left = lowestCommonAncestor(root.left, p, q);
+  const right = lowestCommonAncestor(root.right, p, q);
+  if (left && right) return root;
+  return left || right;
+}
+`,
+  ts: `function lowestCommonAncestor(
+  root: TreeNode | null,
+  p: TreeNode,
+  q: TreeNode,
+): TreeNode | null {
+  if (!root || root === p || root === q) return root;
+  const left = lowestCommonAncestor(root.left, p, q);
+  const right = lowestCommonAncestor(root.right, p, q);
+  if (left && right) return root;
+  return left ?? right;
+}
+`,
+  java: `class Solution {
+    public TreeNode lowestCommonAncestor(TreeNode root, TreeNode p, TreeNode q) {
+        if (root == null || root == p || root == q) return root;
+        TreeNode left = lowestCommonAncestor(root.left, p, q);
+        TreeNode right = lowestCommonAncestor(root.right, p, q);
+        if (left != null && right != null) return root;
+        return left != null ? left : right;
+    }
+}
+`,
+  cpp: `class Solution {
+public:
+    TreeNode* lowestCommonAncestor(TreeNode* root, TreeNode* p, TreeNode* q) {
+        if (!root || root == p || root == q) return root;
+        TreeNode* left = lowestCommonAncestor(root->left, p, q);
+        TreeNode* right = lowestCommonAncestor(root->right, p, q);
+        if (left && right) return root;
+        return left ? left : right;
+    }
+};
+`,
+}
+
+// Iterative solution that exploits the BST ordering (LeetCode 235).
+const LCA_BST: Record<Lang, string> = {
+  py: `def lowestCommonAncestor(root, p, q):
+    while root:
+        if p.val < root.val and q.val < root.val:
+            root = root.left
+        elif p.val > root.val and q.val > root.val:
+            root = root.right
+        else:
+            return root
+`,
+  js: `function lowestCommonAncestor(root, p, q) {
+  while (root) {
+    if (p.val < root.val && q.val < root.val) {
+      root = root.left;
+    } else if (p.val > root.val && q.val > root.val) {
+      root = root.right;
+    } else {
+      return root;
+    }
+  }
+}
+`,
+  ts: `function lowestCommonAncestor(
+  root: TreeNode | null,
+  p: TreeNode,
+  q: TreeNode,
+): TreeNode | null {
+  while (root) {
+    if (p.val < root.val && q.val < root.val) {
+      root = root.left;
+    } else if (p.val > root.val && q.val > root.val) {
+      root = root.right;
+    } else {
+      return root;
+    }
+  }
+  return null;
+}
+`,
+  java: `class Solution {
+    public TreeNode lowestCommonAncestor(TreeNode root, TreeNode p, TreeNode q) {
+        while (root != null) {
+            if (p.val < root.val && q.val < root.val) {
+                root = root.left;
+            } else if (p.val > root.val && q.val > root.val) {
+                root = root.right;
+            } else {
+                return root;
+            }
+        }
+        return null;
+    }
+}
+`,
+  cpp: `class Solution {
+public:
+    TreeNode* lowestCommonAncestor(TreeNode* root, TreeNode* p, TreeNode* q) {
+        while (root) {
+            if (p->val < root->val && q->val < root->val) {
+                root = root->left;
+            } else if (p->val > root->val && q->val > root->val) {
+                root = root->right;
+            } else {
+                return root;
+            }
+        }
+        return nullptr;
+    }
+};
+`,
+}
 
 export const CATEGORIES: Category[] = [
   {
@@ -11,6 +144,16 @@ export const CATEGORIES: Category[] = [
     slug: 'arrays-hashing',
     name: 'Arrays & Hashing',
     blurb: 'Lookups, frequency maps, and the bread-and-butter of interviews.',
+  },
+  {
+    slug: 'stack',
+    name: 'Stack',
+    blurb: 'LIFO problems: bracket matching, spans, and nearest-element queries.',
+  },
+  {
+    slug: 'trees',
+    name: 'Trees',
+    blurb: 'Hierarchical data: depth-first and breadth-first traversals.',
   },
   {
     slug: 'graphs',
@@ -173,6 +316,7 @@ public:
       time: 'O(n) — one pass over the array.',
       space: 'O(n) for the hash map.',
     },
+    Visualizer: TwoSumViz,
     code: {
       py: `def twoSum(nums, target):
     seen = {}  # value -> index
@@ -231,6 +375,361 @@ public:
   },
 
   {
+    slug: 'group-anagrams',
+    category: 'arrays-hashing',
+    title: 'Group Anagrams',
+    difficulty: 'Medium',
+    blurb: 'Cluster words that are rearrangements of the same letters.',
+    tags: ['LeetCode 49', 'Hash Map', 'Sorting'],
+    statement:
+      'Given an array of strings strs, group the anagrams together. Two words are anagrams if one can be formed by rearranging the letters of the other. Return the groups in any order.',
+    intuition: [
+      'Anagrams are exactly the words that contain the same letters with the same counts — they only differ in order.',
+      'So we need a fingerprint that is identical for anagrams and different otherwise.',
+      'Sorting a word’s letters gives such a fingerprint: "eat", "tea", and "ate" all sort to "aet".',
+      'Use that sorted string as a hash-map key and append each word to its bucket.',
+    ],
+    steps: [
+      'Create an empty map from key → list of words.',
+      'For each word, sort its characters to build the key.',
+      'If the key has no bucket yet, create an empty one.',
+      'Append the word to its bucket.',
+      'Return all the buckets (the map’s values).',
+    ],
+    complexity: {
+      time: 'O(n · k log k) — n words, each of length up to k, sorted once.',
+      space: 'O(n · k) to store every word in the map.',
+    },
+    Visualizer: GroupAnagramsViz,
+    code: {
+      py: `def groupAnagrams(strs):
+    groups = {}  # sorted key -> list of words
+    for word in strs:
+        key = ''.join(sorted(word))
+        groups.setdefault(key, []).append(word)
+    return list(groups.values())
+`,
+      js: `function groupAnagrams(strs) {
+  const groups = new Map(); // sorted key -> list of words
+  for (const word of strs) {
+    const key = word.split('').sort().join('');
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(word);
+  }
+  return [...groups.values()];
+}
+`,
+      ts: `function groupAnagrams(strs: string[]): string[][] {
+  const groups = new Map<string, string[]>(); // sorted key -> words
+  for (const word of strs) {
+    const key = word.split('').sort().join('');
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key)!.push(word);
+  }
+  return [...groups.values()];
+}
+`,
+      java: `class Solution {
+    public List<List<String>> groupAnagrams(String[] strs) {
+        Map<String, List<String>> groups = new HashMap<>();
+        for (String word : strs) {
+            char[] chars = word.toCharArray();
+            Arrays.sort(chars);
+            String key = new String(chars);
+            groups.computeIfAbsent(key, k -> new ArrayList<>()).add(word);
+        }
+        return new ArrayList<>(groups.values());
+    }
+}
+`,
+      cpp: `class Solution {
+public:
+    vector<vector<string>> groupAnagrams(vector<string>& strs) {
+        unordered_map<string, vector<string>> groups;
+        for (const string& word : strs) {
+            string key = word;
+            sort(key.begin(), key.end());
+            groups[key].push_back(word);
+        }
+        vector<vector<string>> result;
+        for (auto& [key, group] : groups) result.push_back(group);
+        return result;
+    }
+};
+`,
+    },
+  },
+
+  {
+    slug: 'valid-parentheses',
+    category: 'stack',
+    title: 'Valid Parentheses',
+    difficulty: 'Easy',
+    blurb: 'Decide whether every bracket is correctly opened and closed.',
+    tags: ['LeetCode 20', 'Stack'],
+    statement:
+      "Given a string s containing only the characters '(', ')', '{', '}', '[' and ']', determine if the input is valid. Brackets must be closed by the same type and in the correct order, so every closing bracket matches the most recently opened one.",
+    intuition: [
+      'The most recently opened bracket must be the first one closed — that “last in, first out” rule is exactly a stack.',
+      'Push every opening bracket. When a closing bracket arrives, the top of the stack must be its matching opener.',
+      'If the top does not match (or the stack is empty), the string is invalid.',
+      'After scanning everything, a valid string leaves the stack empty — nothing was left unclosed.',
+    ],
+    steps: [
+      'Create an empty stack and a map from each closing bracket to its opener.',
+      'For each character: if it is a closing bracket, pop the stack and check it equals the expected opener — otherwise return false.',
+      'If it is an opening bracket, push it.',
+      'At the end, return true only if the stack is empty.',
+    ],
+    complexity: {
+      time: 'O(n) — each character is pushed/popped at most once.',
+      space: 'O(n) for the stack in the worst case (all opening brackets).',
+    },
+    Visualizer: ValidParenthesesViz,
+    code: {
+      py: `def isValid(s):
+    stack = []
+    pairs = {')': '(', ']': '[', '}': '{'}
+    for ch in s:
+        if ch in pairs:
+            if not stack or stack.pop() != pairs[ch]:
+                return False
+        else:
+            stack.append(ch)
+    return not stack
+`,
+      js: `function isValid(s) {
+  const stack = [];
+  const pairs = { ')': '(', ']': '[', '}': '{' };
+  for (const ch of s) {
+    if (ch in pairs) {
+      if (stack.pop() !== pairs[ch]) return false;
+    } else {
+      stack.push(ch);
+    }
+  }
+  return stack.length === 0;
+}
+`,
+      ts: `function isValid(s: string): boolean {
+  const stack: string[] = [];
+  const pairs: Record<string, string> = { ')': '(', ']': '[', '}': '{' };
+  for (const ch of s) {
+    if (ch in pairs) {
+      if (stack.pop() !== pairs[ch]) return false;
+    } else {
+      stack.push(ch);
+    }
+  }
+  return stack.length === 0;
+}
+`,
+      java: `class Solution {
+    public boolean isValid(String s) {
+        Deque<Character> stack = new ArrayDeque<>();
+        Map<Character, Character> pairs = Map.of(')', '(', ']', '[', '}', '{');
+        for (char ch : s.toCharArray()) {
+            if (pairs.containsKey(ch)) {
+                if (stack.isEmpty() || stack.pop() != pairs.get(ch)) return false;
+            } else {
+                stack.push(ch);
+            }
+        }
+        return stack.isEmpty();
+    }
+}
+`,
+      cpp: `class Solution {
+public:
+    bool isValid(string s) {
+        stack<char> st;
+        unordered_map<char, char> pairs{{')', '('}, {']', '['}, {'}', '{'}};
+        for (char ch : s) {
+            if (pairs.count(ch)) {
+                if (st.empty() || st.top() != pairs[ch]) return false;
+                st.pop();
+            } else {
+                st.push(ch);
+            }
+        }
+        return st.empty();
+    }
+};
+`,
+    },
+  },
+
+  {
+    slug: 'binary-tree-level-order',
+    category: 'trees',
+    title: 'Binary Tree Level Order Traversal',
+    difficulty: 'Medium',
+    blurb: 'Return node values grouped level by level, top to bottom.',
+    tags: ['LeetCode 102', 'BFS', 'Queue'],
+    statement:
+      "Given the root of a binary tree, return the level-order traversal of its nodes' values — the values grouped by depth, read left to right, from the top level down.",
+    intuition: [
+      'Level order is a breadth-first walk: finish every node at depth 0 before touching depth 1, and so on.',
+      'A queue produces that order for free — it always hands back the oldest-enqueued node first (FIFO).',
+      'The trick to grouping by level is to record the queue’s size at the start of each round; exactly that many nodes make up the current level.',
+      'Dequeue that many nodes, collect their values, and enqueue their children for the next round.',
+    ],
+    steps: [
+      'If the tree is empty, return an empty list.',
+      'Put the root in a queue.',
+      'While the queue is non-empty, snapshot its length — that many nodes form the current level.',
+      'Dequeue each one, append its value to the level, and enqueue its non-null children.',
+      'Push the finished level onto the result and repeat.',
+    ],
+    complexity: {
+      time: 'O(n) — every node is enqueued and dequeued exactly once.',
+      space: 'O(n) — the queue holds up to the widest level of the tree.',
+    },
+    Visualizer: BinaryTreeLevelOrderViz,
+    code: {
+      py: `from collections import deque
+
+def levelOrder(root):
+    result = []
+    if not root:
+        return result
+    queue = deque([root])
+    while queue:
+        level = []
+        for _ in range(len(queue)):
+            node = queue.popleft()
+            level.append(node.val)
+            if node.left:
+                queue.append(node.left)
+            if node.right:
+                queue.append(node.right)
+        result.append(level)
+    return result
+`,
+      js: `function levelOrder(root) {
+  const result = [];
+  if (!root) return result;
+  const queue = [root];
+  while (queue.length) {
+    const level = [];
+    for (let n = queue.length; n > 0; n--) {
+      const node = queue.shift();
+      level.push(node.val);
+      if (node.left) queue.push(node.left);
+      if (node.right) queue.push(node.right);
+    }
+    result.push(level);
+  }
+  return result;
+}
+`,
+      ts: `function levelOrder(root: TreeNode | null): number[][] {
+  const result: number[][] = [];
+  if (!root) return result;
+  const queue: TreeNode[] = [root];
+  while (queue.length) {
+    const level: number[] = [];
+    for (let n = queue.length; n > 0; n--) {
+      const node = queue.shift()!;
+      level.push(node.val);
+      if (node.left) queue.push(node.left);
+      if (node.right) queue.push(node.right);
+    }
+    result.push(level);
+  }
+  return result;
+}
+`,
+      java: `class Solution {
+    public List<List<Integer>> levelOrder(TreeNode root) {
+        List<List<Integer>> result = new ArrayList<>();
+        if (root == null) return result;
+        Queue<TreeNode> queue = new LinkedList<>();
+        queue.offer(root);
+        while (!queue.isEmpty()) {
+            int size = queue.size();
+            List<Integer> level = new ArrayList<>();
+            for (int n = 0; n < size; n++) {
+                TreeNode node = queue.poll();
+                level.add(node.val);
+                if (node.left != null) queue.offer(node.left);
+                if (node.right != null) queue.offer(node.right);
+            }
+            result.add(level);
+        }
+        return result;
+    }
+}
+`,
+      cpp: `class Solution {
+public:
+    vector<vector<int>> levelOrder(TreeNode* root) {
+        vector<vector<int>> result;
+        if (!root) return result;
+        queue<TreeNode*> q;
+        q.push(root);
+        while (!q.empty()) {
+            int size = q.size();
+            vector<int> level;
+            for (int n = 0; n < size; n++) {
+                TreeNode* node = q.front(); q.pop();
+                level.push_back(node->val);
+                if (node->left) q.push(node->left);
+                if (node->right) q.push(node->right);
+            }
+            result.push_back(level);
+        }
+        return result;
+    }
+};
+`,
+    },
+  },
+
+  {
+    slug: 'lowest-common-ancestor',
+    category: 'trees',
+    title: 'Lowest Common Ancestor of a Binary Tree',
+    difficulty: 'Medium',
+    blurb: 'Find the deepest node that has both target nodes as descendants.',
+    tags: ['LeetCode 236', 'DFS', 'Recursion'],
+    statement:
+      'Given the root of a binary tree and two nodes p and q, return their lowest common ancestor (LCA): the deepest node that has both p and q as descendants. A node may be a descendant of itself.',
+    intuition: [
+      'Solve it bottom-up: ask each node “does my subtree contain p or q?”',
+      'A call returns a non-null signal if a target is found at or below that node.',
+      'If a node hears back from BOTH its left and right subtrees, the two targets first meet here — this node is the LCA.',
+      'If only one side reports a target, pass that signal straight up; the meeting point is higher.',
+    ],
+    steps: [
+      'If the node is null or is one of the targets, return it.',
+      'Recurse into the left and right children.',
+      'If both recursive calls return non-null, the current node is the LCA.',
+      'Otherwise return whichever side was non-null (or null if neither).',
+    ],
+    complexity: {
+      time: 'O(n) — each node is visited once.',
+      space: 'O(h) for the recursion stack, where h is the tree height.',
+    },
+    Visualizer: LowestCommonAncestorViz,
+    code: LCA_RECURSIVE,
+    solutions: [
+      {
+        name: '1 · Recursive — works on any binary tree',
+        blurb:
+          'Bottom-up DFS: each call reports whether a target is in its subtree; the node that hears back from both sides is the LCA.',
+        code: LCA_RECURSIVE,
+      },
+      {
+        name: '2 · Iterative — binary search tree only',
+        blurb:
+          'When the tree is a BST, the ordering tells you which way to walk. Where the paths to p and q diverge is the LCA — O(h) time, O(1) space.',
+        code: LCA_BST,
+      },
+    ],
+  },
+
+  {
     slug: 'number-of-islands',
     category: 'graphs',
     title: 'Number of Islands',
@@ -254,6 +753,7 @@ public:
       time: 'O(m · n) — every cell is visited a constant number of times.',
       space: 'O(m · n) worst case for the recursion stack.',
     },
+    Visualizer: NumberOfIslandsViz,
     code: {
       py: `def numIslands(grid):
     if not grid:

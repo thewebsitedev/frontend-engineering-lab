@@ -30,8 +30,16 @@ export type Algorithm = {
   intuition: string[]
   steps: string[]
   complexity: { time: string; space: string }
-  // Source per language
+  // Source per language (primary solution)
   code: Record<Lang, string>
+  // Optional additional named solutions shown alongside the primary one
+  solutions?: Solution[]
   // Optional interactive walkthrough component
   Visualizer?: ComponentType
+}
+
+export type Solution = {
+  name: string
+  blurb?: string
+  code: Record<Lang, string>
 }

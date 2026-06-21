@@ -139,8 +139,36 @@ export default async function AlgorithmPage({ params }: { params: Promise<Params
       </ol>
 
       {/* Code */}
-      <SectionHeading>Reference implementation</SectionHeading>
-      <CodeTabs code={found.code} />
+      {found.solutions && found.solutions.length > 0 ? (
+        <>
+          <SectionHeading>Reference implementations</SectionHeading>
+          {found.solutions.map((sol, idx) => (
+            <div key={idx} style={{ marginBottom: 22 }}>
+              <div
+                style={{
+                  fontFamily: MONO,
+                  fontWeight: 700,
+                  fontSize: 15,
+                  marginBottom: sol.blurb ? 4 : 10,
+                }}
+              >
+                {sol.name}
+              </div>
+              {sol.blurb && (
+                <p style={{ fontSize: 14, lineHeight: 1.55, opacity: 0.8, margin: '0 0 10px' }}>
+                  {sol.blurb}
+                </p>
+              )}
+              <CodeTabs code={sol.code} />
+            </div>
+          ))}
+        </>
+      ) : (
+        <>
+          <SectionHeading>Reference implementation</SectionHeading>
+          <CodeTabs code={found.code} />
+        </>
+      )}
 
       {/* Complexity */}
       <SectionHeading>Complexity</SectionHeading>
