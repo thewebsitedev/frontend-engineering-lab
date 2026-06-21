@@ -6,6 +6,7 @@ import ValidParenthesesViz from './algos/valid-parentheses/ValidParenthesesViz'
 import NumberOfIslandsViz from './algos/number-of-islands/NumberOfIslandsViz'
 import BinaryTreeLevelOrderViz from './algos/binary-tree-level-order/BinaryTreeLevelOrderViz'
 import LowestCommonAncestorViz from './algos/lowest-common-ancestor/LowestCommonAncestorViz'
+import TopKFrequentViz from './algos/top-k-frequent/TopKFrequentViz'
 
 // Lowest Common Ancestor has two notable solutions, shared below.
 const LCA_RECURSIVE: Record<Lang, string> = {
@@ -553,6 +554,116 @@ public:
             }
         }
         return st.empty();
+    }
+};
+`,
+    },
+  },
+
+  {
+    slug: 'top-k-frequent',
+    category: 'arrays-hashing',
+    title: 'Top K Frequent Elements',
+    difficulty: 'Medium',
+    blurb: 'Return the k values that appear most often — in O(n) with bucket sort.',
+    tags: ['LeetCode 347', 'Hash Map', 'Bucket Sort'],
+    statement:
+      'Given an integer array nums and an integer k, return the k most frequent elements. You may return the answer in any order.',
+    intuition: [
+      'First tally how many times each value occurs using a hash map.',
+      'The highest frequency any value can have is the array length, so make one bucket per possible frequency.',
+      'Drop each value into the bucket matching its count — this groups by frequency without sorting (no n·log n).',
+      'Walk the buckets from the highest frequency downward, collecting values until you have k.',
+    ],
+    steps: [
+      'Count occurrences of each value in a map.',
+      'Create buckets indexed by frequency (0..n).',
+      'Place each value in the bucket equal to its count.',
+      'Scan buckets high → low, collecting values until k are gathered.',
+    ],
+    complexity: {
+      time: 'O(n) — counting, bucketing, and scanning are each linear.',
+      space: 'O(n) for the count map and the buckets.',
+    },
+    Visualizer: TopKFrequentViz,
+    code: {
+      py: `def topKFrequent(nums, k):
+    count = {}
+    for n in nums:
+        count[n] = count.get(n, 0) + 1
+    buckets = [[] for _ in range(len(nums) + 1)]
+    for n, c in count.items():
+        buckets[c].append(n)
+    res = []
+    for c in range(len(buckets) - 1, 0, -1):
+        for n in buckets[c]:
+            res.append(n)
+            if len(res) == k:
+                return res
+    return res
+`,
+      js: `function topKFrequent(nums, k) {
+  const count = new Map();
+  for (const n of nums) count.set(n, (count.get(n) || 0) + 1);
+  const buckets = Array.from({ length: nums.length + 1 }, () => []);
+  for (const [n, c] of count) buckets[c].push(n);
+  const res = [];
+  for (let c = buckets.length - 1; c > 0 && res.length < k; c--) {
+    for (const n of buckets[c]) {
+      res.push(n);
+      if (res.length === k) return res;
+    }
+  }
+  return res;
+}
+`,
+      ts: `function topKFrequent(nums: number[], k: number): number[] {
+  const count = new Map<number, number>();
+  for (const n of nums) count.set(n, (count.get(n) || 0) + 1);
+  const buckets: number[][] = Array.from({ length: nums.length + 1 }, () => []);
+  for (const [n, c] of count) buckets[c].push(n);
+  const res: number[] = [];
+  for (let c = buckets.length - 1; c > 0 && res.length < k; c--) {
+    for (const n of buckets[c]) {
+      res.push(n);
+      if (res.length === k) return res;
+    }
+  }
+  return res;
+}
+`,
+      java: `class Solution {
+    public int[] topKFrequent(int[] nums, int k) {
+        Map<Integer, Integer> count = new HashMap<>();
+        for (int n : nums) count.merge(n, 1, Integer::sum);
+        List<Integer>[] buckets = new List[nums.length + 1];
+        for (int i = 0; i < buckets.length; i++) buckets[i] = new ArrayList<>();
+        for (var e : count.entrySet()) buckets[e.getValue()].add(e.getKey());
+        int[] res = new int[k];
+        int idx = 0;
+        for (int c = buckets.length - 1; c > 0 && idx < k; c--)
+            for (int n : buckets[c]) {
+                res[idx++] = n;
+                if (idx == k) return res;
+            }
+        return res;
+    }
+}
+`,
+      cpp: `class Solution {
+public:
+    vector<int> topKFrequent(vector<int>& nums, int k) {
+        unordered_map<int, int> count;
+        for (int n : nums) count[n]++;
+        vector<vector<int>> buckets(nums.size() + 1);
+        for (auto& [n, c] : count) buckets[c].push_back(n);
+        vector<int> res;
+        for (int c = buckets.size() - 1; c > 0 && (int)res.size() < k; c--)
+            for (int n : buckets[c]) {
+                res.push_back(n);
+                if ((int)res.size() == k) return res;
+            }
+        return res;
     }
 };
 `,
