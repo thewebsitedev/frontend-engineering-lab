@@ -1,6 +1,7 @@
 import type { Algorithm, Category } from './types'
 import RedundantConnectionViz from './algos/redundant-connection/RedundantConnectionViz'
 import TwoSumViz from './algos/two-sum/TwoSumViz'
+import GroupAnagramsViz from './algos/group-anagrams/GroupAnagramsViz'
 
 export const CATEGORIES: Category[] = [
   {
@@ -226,6 +227,92 @@ public:
             seen[nums[i]] = i;
         }
         return {};
+    }
+};
+`,
+    },
+  },
+
+  {
+    slug: 'group-anagrams',
+    category: 'arrays-hashing',
+    title: 'Group Anagrams',
+    difficulty: 'Medium',
+    blurb: 'Cluster words that are rearrangements of the same letters.',
+    tags: ['LeetCode 49', 'Hash Map', 'Sorting'],
+    statement:
+      'Given an array of strings strs, group the anagrams together. Two words are anagrams if one can be formed by rearranging the letters of the other. Return the groups in any order.',
+    intuition: [
+      'Anagrams are exactly the words that contain the same letters with the same counts — they only differ in order.',
+      'So we need a fingerprint that is identical for anagrams and different otherwise.',
+      'Sorting a word’s letters gives such a fingerprint: "eat", "tea", and "ate" all sort to "aet".',
+      'Use that sorted string as a hash-map key and append each word to its bucket.',
+    ],
+    steps: [
+      'Create an empty map from key → list of words.',
+      'For each word, sort its characters to build the key.',
+      'If the key has no bucket yet, create an empty one.',
+      'Append the word to its bucket.',
+      'Return all the buckets (the map’s values).',
+    ],
+    complexity: {
+      time: 'O(n · k log k) — n words, each of length up to k, sorted once.',
+      space: 'O(n · k) to store every word in the map.',
+    },
+    Visualizer: GroupAnagramsViz,
+    code: {
+      py: `def groupAnagrams(strs):
+    groups = {}  # sorted key -> list of words
+    for word in strs:
+        key = ''.join(sorted(word))
+        groups.setdefault(key, []).append(word)
+    return list(groups.values())
+`,
+      js: `function groupAnagrams(strs) {
+  const groups = new Map(); // sorted key -> list of words
+  for (const word of strs) {
+    const key = word.split('').sort().join('');
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(word);
+  }
+  return [...groups.values()];
+}
+`,
+      ts: `function groupAnagrams(strs: string[]): string[][] {
+  const groups = new Map<string, string[]>(); // sorted key -> words
+  for (const word of strs) {
+    const key = word.split('').sort().join('');
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key)!.push(word);
+  }
+  return [...groups.values()];
+}
+`,
+      java: `class Solution {
+    public List<List<String>> groupAnagrams(String[] strs) {
+        Map<String, List<String>> groups = new HashMap<>();
+        for (String word : strs) {
+            char[] chars = word.toCharArray();
+            Arrays.sort(chars);
+            String key = new String(chars);
+            groups.computeIfAbsent(key, k -> new ArrayList<>()).add(word);
+        }
+        return new ArrayList<>(groups.values());
+    }
+}
+`,
+      cpp: `class Solution {
+public:
+    vector<vector<string>> groupAnagrams(vector<string>& strs) {
+        unordered_map<string, vector<string>> groups;
+        for (const string& word : strs) {
+            string key = word;
+            sort(key.begin(), key.end());
+            groups[key].push_back(word);
+        }
+        vector<vector<string>> result;
+        for (auto& [key, group] : groups) result.push_back(group);
+        return result;
     }
 };
 `,
