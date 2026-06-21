@@ -10,6 +10,7 @@ import TopKFrequentViz from './algos/top-k-frequent/TopKFrequentViz'
 import MergeIntervalsViz from './algos/merge-intervals/MergeIntervalsViz'
 import CourseScheduleViz from './algos/course-schedule/CourseScheduleViz'
 import CloneGraphViz from './algos/clone-graph/CloneGraphViz'
+import KClosestPointsViz from './algos/k-closest-points/KClosestPointsViz'
 
 // Lowest Common Ancestor has two notable solutions, shared below.
 const LCA_RECURSIVE: Record<Lang, string> = {
@@ -313,6 +314,126 @@ public:
 `,
 }
 
+// K Closest Points has two standard solutions; the visualizer animates both.
+const KCLOSEST_SORT: Record<Lang, string> = {
+  py: `def kClosest(points, k):
+    # Sort every point by its squared distance to the origin, then take the first k.
+    points.sort(key=lambda p: p[0] * p[0] + p[1] * p[1])
+    return points[:k]
+`,
+  js: `function kClosest(points, k) {
+  // Pair each point with its squared distance, sort ascending, take the first k.
+  const withDist = points.map(([x, y]) => [x * x + y * y, x, y]);
+  withDist.sort((a, b) => a[0] - b[0]);
+  const result = [];
+  for (let i = 0; i < k; i++) {
+    result.push([withDist[i][1], withDist[i][2]]);
+  }
+  return result;
+}
+`,
+  ts: `function kClosest(points: number[][], k: number): number[][] {
+  const withDist = points.map(([x, y]) => [x * x + y * y, x, y]);
+  withDist.sort((a, b) => a[0] - b[0]);
+  const result: number[][] = [];
+  for (let i = 0; i < k; i++) {
+    result.push([withDist[i][1], withDist[i][2]]);
+  }
+  return result;
+}
+`,
+  java: `class Solution {
+    public int[][] kClosest(int[][] points, int k) {
+        // Sort by squared distance, then copy the first k rows.
+        Arrays.sort(points, (a, b) ->
+            (a[0] * a[0] + a[1] * a[1]) - (b[0] * b[0] + b[1] * b[1]));
+        return Arrays.copyOfRange(points, 0, k);
+    }
+}
+`,
+  cpp: `class Solution {
+public:
+    vector<vector<int>> kClosest(vector<vector<int>>& points, int k) {
+        sort(points.begin(), points.end(), [](auto& a, auto& b) {
+            return a[0] * a[0] + a[1] * a[1] < b[0] * b[0] + b[1] * b[1];
+        });
+        return vector<vector<int>>(points.begin(), points.begin() + k);
+    }
+};
+`,
+}
+
+const KCLOSEST_HEAP: Record<Lang, string> = {
+  py: `import heapq
+
+def kClosest(points, k):
+    # Max-heap of size k. Python's heapq is a min-heap, so negate the distance.
+    heap = []
+    for x, y in points:
+        d = x * x + y * y
+        heapq.heappush(heap, (-d, x, y))
+        if len(heap) > k:
+            heapq.heappop(heap)   # drop the farthest (largest d)
+    return [[x, y] for (_, x, y) in heap]
+`,
+  js: `function kClosest(points, k) {
+  // Keep at most k points; the heap's max (farthest) is dropped when we exceed k.
+  const heap = new MaxHeap();        // ordered by distance
+  for (const [x, y] of points) {
+    const d = x * x + y * y;
+    heap.push([d, x, y]);
+    if (heap.size() > k) {
+      heap.pop();                    // remove the farthest
+    }
+  }
+  return heap.toArray().map(([d, x, y]) => [x, y]);
+}
+`,
+  ts: `function kClosest(points: number[][], k: number): number[][] {
+  const heap = new MaxHeap();        // ordered by distance
+  for (const [x, y] of points) {
+    const d = x * x + y * y;
+    heap.push([d, x, y]);
+    if (heap.size() > k) {
+      heap.pop();                    // remove the farthest
+    }
+  }
+  return heap.toArray().map(([d, x, y]) => [x, y]);
+}
+`,
+  java: `class Solution {
+    public int[][] kClosest(int[][] points, int k) {
+        // Max-heap keyed by squared distance; keep only the k smallest.
+        PriorityQueue<int[]> heap = new PriorityQueue<>(
+            (a, b) -> (b[0] * b[0] + b[1] * b[1]) - (a[0] * a[0] + a[1] * a[1]));
+        for (int[] p : points) {
+            heap.offer(p);
+            if (heap.size() > k) heap.poll();   // drop the farthest
+        }
+        int[][] result = new int[k][2];
+        for (int i = 0; i < k; i++) result[i] = heap.poll();
+        return result;
+    }
+}
+`,
+  cpp: `class Solution {
+public:
+    vector<vector<int>> kClosest(vector<vector<int>>& points, int k) {
+        // Max-heap (default priority_queue) keyed by squared distance.
+        priority_queue<pair<int, vector<int>>> heap;
+        for (auto& p : points) {
+            int d = p[0] * p[0] + p[1] * p[1];
+            heap.push({d, p});
+            if ((int)heap.size() > k) heap.pop();   // drop the farthest
+        }
+        vector<vector<int>> result;
+        while (!heap.empty()) { result.push_back(heap.top().second); heap.pop(); }
+        return result;
+    }
+};
+`,
+}
+
 export const CATEGORIES: Category[] = [
   {
     slug: 'union-find',
@@ -343,6 +464,11 @@ export const CATEGORIES: Category[] = [
     slug: 'graphs',
     name: 'Graphs',
     blurb: 'Traversal, flood fill, and exploring connected components.',
+  },
+  {
+    slug: 'heap',
+    name: 'Heap / Priority Queue',
+    blurb: 'Keep the best k items on hand without sorting everything.',
   },
   {
     slug: 'dynamic-programming',
@@ -1325,6 +1451,50 @@ public:
         blurb:
           'Recurse from the start node. Record a node’s copy in the map BEFORE recursing into its neighbours so cycles resolve to the existing copy instead of looping forever.',
         code: CLONE_DFS,
+      },
+    ],
+  },
+
+  {
+    slug: 'k-closest-points',
+    category: 'heap',
+    title: 'K Closest Points to Origin',
+    difficulty: 'Medium',
+    blurb: 'Return the k points nearest to (0,0) — by sorting or with a size-k max-heap.',
+    tags: ['LeetCode 973', 'Heap', 'Sorting', 'QuickSelect'],
+    statement:
+      'Given an array of points where points[i] = [xi, yi] on the plane and an integer k, return the k points closest to the origin (0, 0). The distance between two points is the Euclidean distance. You may return the answer in any order.',
+    intuition: [
+      'Closeness is measured by distance to the origin, √(x² + y²). Since the square root is increasing, comparing the squared distance x² + y² gives the same ordering — and avoids floating-point math.',
+      'Simplest approach: compute every squared distance, sort the points by it, and take the first k. That is O(n log n) — easy and often fast enough.',
+      'When n is huge but k is small, you do not need a full sort. Keep a max-heap of only the k best seen so far: the farthest of your current keepers sits on top.',
+      'For each new point, push it; if the heap now holds more than k, pop the top (the farthest). Whatever stays is the k closest — in O(n log k) time and O(k) space.',
+    ],
+    steps: [
+      'Compute each point’s squared distance d = x² + y² to the origin.',
+      'Sorting: sort all points by d ascending and return the first k.',
+      'Heap: push each point onto a max-heap keyed by d.',
+      'If the heap grows past size k, pop the top (the farthest point).',
+      'After all points, the heap (or the first k of the sorted list) holds the answer.',
+    ],
+    complexity: {
+      time: 'Sort: O(n log n). Heap: O(n log k) — better when k ≪ n. (QuickSelect: O(n) average.)',
+      space: 'Sort: O(n) for the keys. Heap: O(k).',
+    },
+    Visualizer: KClosestPointsViz,
+    code: KCLOSEST_HEAP,
+    solutions: [
+      {
+        name: '1 · Sort by distance — O(n log n)',
+        blurb:
+          'Pair each point with its squared distance, sort ascending, and take the first k. The shortest code; great default.',
+        code: KCLOSEST_SORT,
+      },
+      {
+        name: '2 · Max-heap of size k — O(n log k)',
+        blurb:
+          'Hold only the k best seen so far. Push each point; if the heap exceeds k, pop the farthest. Faster than sorting when k is much smaller than n.',
+        code: KCLOSEST_HEAP,
       },
     ],
   },
