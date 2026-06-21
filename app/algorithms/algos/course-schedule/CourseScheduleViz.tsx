@@ -52,6 +52,7 @@ type Frame = {
   kind: string
   line: number
   indeg: number[]
+  builtEdges: [number, number][]
   queueIds: number[]
   done: number[]
   current: number | null
@@ -63,122 +64,211 @@ type Frame = {
   note: string
 }
 
-function buildFrames(
-  n: number,
-  prereqs: [number, number][],
-): { frames: Frame[]; adj: number[][] } {
+// Trace every executed line so the walkthrough mirrors the code step by step.
+function buildFrames(n: number, prereqs: [number, number][]): { frames: Frame[] } {
   const adj: number[][] = Array.from({ length: n }, () => [])
   const indeg = new Array(n).fill(0)
-  for (const [a, b] of prereqs) {
-    adj[b].push(a)
-    indeg[a]++
-  }
-  const frames: Frame[] = []
-  const snap = () => [...indeg]
-
-  frames.push({
-    kind: 'start',
-    line: 6,
-    indeg: snap(),
-    queueIds: [],
-    done: [],
-    current: null,
-    relaxEdge: null,
-    taken: 0,
-    canFinish: null,
-    vars: [['n', String(n)]],
-    title: 'Build the graph',
-    note: 'Each prerequisite [a, b] becomes an arrow b → a (take b before a). indeg[c] counts how many prerequisites course c still needs.',
-  })
-
+  const builtEdges: [number, number][] = []
   const q: number[] = []
-  for (let c = 0; c < n; c++) if (indeg[c] === 0) q.push(c)
-  frames.push({
-    kind: 'initQueue',
-    line: 10,
-    indeg: snap(),
-    queueIds: [...q],
-    done: [],
-    current: null,
-    relaxEdge: null,
-    taken: 0,
-    canFinish: null,
-    vars: [['queue', `[${q.join(', ')}]`]],
-    title: 'Find ready courses',
-    note: `Courses with indegree 0 have no prerequisites, so they are ready first: ${q.length ? q.join(', ') : 'none'}.`,
-  })
-
   const done: number[] = []
   let taken = 0
-  while (q.length) {
-    const u = q.shift()!
-    done.push(u)
-    taken++
+  let cur: number | null = null
+  let relax: [number, number] | null = null
+  let canFinish: boolean | null = null
+
+  const frames: Frame[] = []
+  const push = (
+    kind: string,
+    line: number,
+    title: string,
+    note: string,
+    vars: [string, string][] = [],
+  ) =>
     frames.push({
-      kind: 'take',
-      line: 13,
-      indeg: snap(),
+      kind,
+      line,
+      title,
+      note,
+      vars,
+      indeg: [...indeg],
+      builtEdges: builtEdges.map((e) => [e[0], e[1]] as [number, number]),
       queueIds: [...q],
       done: [...done],
-      current: u,
-      relaxEdge: null,
+      current: cur,
+      relaxEdge: relax ? [relax[0], relax[1]] : null,
       taken,
-      canFinish: null,
-      vars: [
-        ['u', String(u)],
-        ['taken', String(taken)],
-      ],
-      title: `Take course ${u}`,
-      note: `Course ${u} has no remaining prerequisites — take it. taken = ${taken}.`,
+      canFinish,
     })
-    for (const v of adj[u]) {
-      indeg[v]--
-      const ready = indeg[v] === 0
-      if (ready) q.push(v)
-      frames.push({
-        kind: 'relax',
-        line: 16,
-        indeg: snap(),
-        queueIds: [...q],
-        done: [...done],
-        current: u,
-        relaxEdge: [u, v],
-        taken,
-        canFinish: null,
-        vars: [
-          ['u', String(u)],
-          ['v', String(v)],
-          [`indeg[${v}]`, String(indeg[v])],
-        ],
-        title: `Clear a prereq of ${v}`,
-        note: `${u} was a prerequisite of ${v}: indeg[${v}] → ${indeg[v]}.${ready ? ` ${v} is now ready → add it to the queue.` : ''}`,
-      })
+
+  // --- Build the graph (lines 2-7) ---
+  push(
+    'init',
+    2,
+    'Set up the bookkeeping',
+    'adj[c] will list the courses that depend on c. indeg[c] counts how many prerequisites course c still needs. Everything starts empty / zero.',
+    [['numCourses', String(n)]],
+  )
+
+  for (const [a, b] of prereqs) {
+    relax = null
+    push(
+      'build',
+      4,
+      `Read prerequisite [${a}, ${b}]`,
+      `[a, b] = [${a}, ${b}] means you must take course ${b} before course ${a}.`,
+      [['a', String(a)], ['b', String(b)]],
+    )
+    adj[b].push(a)
+    builtEdges.push([b, a])
+    relax = [b, a]
+    push(
+      'build',
+      5,
+      `Add edge ${b} → ${a}`,
+      `${b} unlocks ${a}, so record ${a} inside adj[${b}].`,
+      [['a', String(a)], ['b', String(b)], [`adj[${b}]`, `[${adj[b].join(', ')}]`]],
+    )
+    indeg[a]++
+    relax = null
+    push(
+      'build',
+      6,
+      `Course ${a} needs one more prereq`,
+      `Course ${a} has another prerequisite, so bump its counter: indeg[${a}] → ${indeg[a]}.`,
+      [['a', String(a)], [`indeg[${a}]`, String(indeg[a])]],
+    )
+  }
+
+  // --- Find the courses that are ready first (lines 8-10) ---
+  push('scan', 8, 'Create the queue', 'The queue holds courses that are ready to take right now — the ones with no remaining prerequisites.', [['queue', '[]']])
+  for (let c = 0; c < n; c++) {
+    push(
+      'scan',
+      9,
+      `Look at course ${c}`,
+      `Walk through every course. Is course ${c} ready? Check indeg[${c}].`,
+      [['c', String(c)], [`indeg[${c}]`, String(indeg[c])]],
+    )
+    if (indeg[c] === 0) {
+      q.push(c)
+      push(
+        'scan',
+        10,
+        `Course ${c} is ready`,
+        `indeg[${c}] is 0 — no prerequisites — so add ${c} to the queue.`,
+        [['c', String(c)], ['queue', `[${q.join(', ')}]`]],
+      )
+    } else {
+      push(
+        'scan',
+        10,
+        `Course ${c} must wait`,
+        `indeg[${c}] = ${indeg[c]} > 0, so course ${c} is not ready. Skip it for now.`,
+        [['c', String(c)], [`indeg[${c}]`, String(indeg[c])]],
+      )
     }
   }
 
-  const canFinish = taken === n
-  frames.push({
-    kind: 'done',
-    line: 20,
-    indeg: snap(),
-    queueIds: [],
-    done: [...done],
-    current: null,
-    relaxEdge: null,
-    taken,
-    canFinish,
-    vars: [
-      ['taken', String(taken)],
-      ['n', String(n)],
-    ],
-    title: canFinish ? 'Can finish ✓' : 'Cannot finish ✗',
-    note: canFinish
-      ? `Took all ${n} courses → no cycle, so you CAN finish. Return true.`
-      : `Only took ${taken} of ${n}. The remaining courses never reach indegree 0 — they depend on each other in a cycle → you CANNOT finish. Return false.`,
-  })
+  push('scan', 11, 'Start the counter', 'taken records how many courses we have managed to schedule. Start it at 0.', [['taken', '0']])
 
-  return { frames, adj }
+  // --- Process the queue (lines 12-19) ---
+  while (true) {
+    cur = null
+    relax = null
+    if (q.length === 0) {
+      push('loop', 12, 'Queue is empty', 'No courses are ready anymore, so the loop stops here.', [['queue', '[]'], ['taken', String(taken)]])
+      break
+    }
+    push('loop', 12, 'Queue still has courses', `queue = [${q.join(', ')}] — at least one course is ready, so keep going.`, [['queue', `[${q.join(', ')}]`]])
+
+    const u = q.shift()!
+    cur = u
+    push(
+      'take',
+      13,
+      `Take course ${u}`,
+      `Remove the front of the queue: u = ${u}. We are taking course ${u} now.`,
+      [['u', String(u)], ['queue', `[${q.join(', ')}]`]],
+    )
+    done.push(u)
+    taken++
+    push(
+      'take',
+      14,
+      `${taken} course${taken === 1 ? '' : 's'} taken`,
+      `Course ${u} is scheduled. taken → ${taken}.`,
+      [['u', String(u)], ['taken', String(taken)]],
+    )
+
+    for (const v of adj[u]) {
+      relax = [u, v]
+      push(
+        'relax',
+        15,
+        `Follow ${u} → ${v}`,
+        `Course ${u} unlocks course ${v}. Visit that neighbour next.`,
+        [['u', String(u)], ['v', String(v)]],
+      )
+      indeg[v]--
+      push(
+        'relax',
+        16,
+        `Clear a prereq of ${v}`,
+        `${u} is taken, so ${v} needs one fewer prerequisite: indeg[${v}] → ${indeg[v]}.`,
+        [['v', String(v)], [`indeg[${v}]`, String(indeg[v])]],
+      )
+      if (indeg[v] === 0) {
+        q.push(v)
+        push(
+          'relax',
+          17,
+          `Course ${v} is now ready`,
+          `indeg[${v}] hit 0 — all of its prerequisites are done — so add ${v} to the queue.`,
+          [['v', String(v)], ['queue', `[${q.join(', ')}]`]],
+        )
+      } else {
+        push(
+          'relax',
+          17,
+          `Course ${v} still waiting`,
+          `indeg[${v}] = ${indeg[v]} > 0, so ${v} is not ready yet. Leave it.`,
+          [['v', String(v)], [`indeg[${v}]`, String(indeg[v])]],
+        )
+      }
+    }
+  }
+
+  // --- Final answer (line 20) ---
+  cur = null
+  relax = null
+  canFinish = taken === n
+  push(
+    'done',
+    20,
+    canFinish ? 'Can finish ✓' : 'Cannot finish ✗',
+    canFinish
+      ? `taken (${taken}) === numCourses (${n}) — every course got scheduled, so there is no cycle. Return true.`
+      : `taken (${taken}) ≠ numCourses (${n}). The leftover courses keep waiting on each other in a cycle, so they can never start. Return false.`,
+    [['taken', String(taken)], ['numCourses', String(n)]],
+  )
+
+  return { frames }
 }
+
+const kindColor = (kind: string, canFinish: boolean | null): string =>
+  kind === 'take'
+    ? C.signal
+    : kind === 'relax'
+      ? C.trace
+      : kind === 'build'
+        ? C.go
+        : kind === 'scan'
+          ? C.trace
+          : kind === 'done'
+            ? canFinish
+              ? C.go
+              : C.signal
+            : C.ink
 
 export default function CourseScheduleViz() {
   const [nText, setNText] = useState(PRESETS[0].n)
@@ -186,7 +276,7 @@ export default function CourseScheduleViz() {
 
   const n = Math.min(Math.max(Number(nText) || 0, 1), 8)
   const prereqs = useMemo(() => parsePairs(prereqText, n), [prereqText, n])
-  const { frames, adj } = useMemo(() => buildFrames(n, prereqs), [n, prereqs])
+  const { frames } = useMemo(() => buildFrames(n, prereqs), [n, prereqs])
   const [i, setI] = useState(0)
 
   const changeN = useCallback((v: string) => {
@@ -413,36 +503,34 @@ export default function CourseScheduleViz() {
                   <path d="M0,0 L8,4 L0,8 z" fill={C.signal} />
                 </marker>
               </defs>
-              {/* edges b -> a */}
-              {adj.map((targets, b) =>
-                targets.map((a) => {
-                  if (a === b) return null
-                  const pb = pos(b)
-                  const pa = pos(a)
-                  const dx = pa.x - pb.x
-                  const dy = pa.y - pb.y
-                  const len = Math.hypot(dx, dy) || 1
-                  const ux = dx / len
-                  const uy = dy / len
-                  const x1 = pb.x + ux * r
-                  const y1 = pb.y + uy * r
-                  const x2 = pa.x - ux * (r + 4)
-                  const y2 = pa.y - uy * (r + 4)
-                  const hot = f.relaxEdge && f.relaxEdge[0] === b && f.relaxEdge[1] === a
-                  return (
-                    <line
-                      key={`${b}-${a}`}
-                      x1={x1}
-                      y1={y1}
-                      x2={x2}
-                      y2={y2}
-                      stroke={hot ? C.signal : C.slate}
-                      strokeWidth={hot ? 2.5 : 1.5}
-                      markerEnd={`url(#${hot ? 'cs-arrow-hot' : 'cs-arrow'})`}
-                    />
-                  )
-                }),
-              )}
+              {/* edges b -> a, drawn only once they have been built */}
+              {f.builtEdges.map(([b, a], ei) => {
+                if (a === b) return null
+                const pb = pos(b)
+                const pa = pos(a)
+                const dx = pa.x - pb.x
+                const dy = pa.y - pb.y
+                const len = Math.hypot(dx, dy) || 1
+                const ux = dx / len
+                const uy = dy / len
+                const x1 = pb.x + ux * r
+                const y1 = pb.y + uy * r
+                const x2 = pa.x - ux * (r + 4)
+                const y2 = pa.y - uy * (r + 4)
+                const hot = f.relaxEdge && f.relaxEdge[0] === b && f.relaxEdge[1] === a
+                return (
+                  <line
+                    key={`${b}-${a}-${ei}`}
+                    x1={x1}
+                    y1={y1}
+                    x2={x2}
+                    y2={y2}
+                    stroke={hot ? C.signal : C.slate}
+                    strokeWidth={hot ? 2.5 : 1.5}
+                    markerEnd={`url(#${hot ? 'cs-arrow-hot' : 'cs-arrow'})`}
+                  />
+                )
+              })}
               {/* nodes */}
               {Array.from({ length: n }, (_, idx) => {
                 const p = pos(idx)
@@ -554,17 +642,7 @@ export default function CourseScheduleViz() {
           {/* narration */}
           <div
             style={{
-              borderLeft: `3px solid ${
-                f.kind === 'take'
-                  ? C.signal
-                  : f.kind === 'relax'
-                    ? C.trace
-                    : f.kind === 'done'
-                      ? f.canFinish
-                        ? C.go
-                        : C.signal
-                      : C.ink
-              }`,
+              borderLeft: `3px solid ${kindColor(f.kind, f.canFinish)}`,
               paddingLeft: 12,
               minHeight: 78,
             }}
@@ -619,15 +697,7 @@ export default function CourseScheduleViz() {
               padding: 0,
               background:
                 idx <= Math.min(i, frames.length - 1)
-                  ? fr.kind === 'take'
-                    ? C.signal
-                    : fr.kind === 'relax'
-                      ? C.trace
-                      : fr.kind === 'done'
-                        ? fr.canFinish
-                          ? C.go
-                          : C.signal
-                        : C.ink
+                  ? kindColor(fr.kind, fr.canFinish)
                   : C.wire,
             }}
           />
