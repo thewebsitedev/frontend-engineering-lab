@@ -7,6 +7,7 @@ import NumberOfIslandsViz from './algos/number-of-islands/NumberOfIslandsViz'
 import BinaryTreeLevelOrderViz from './algos/binary-tree-level-order/BinaryTreeLevelOrderViz'
 import LowestCommonAncestorViz from './algos/lowest-common-ancestor/LowestCommonAncestorViz'
 import TopKFrequentViz from './algos/top-k-frequent/TopKFrequentViz'
+import MergeIntervalsViz from './algos/merge-intervals/MergeIntervalsViz'
 
 // Lowest Common Ancestor has two notable solutions, shared below.
 const LCA_RECURSIVE: Record<Lang, string> = {
@@ -150,6 +151,11 @@ export const CATEGORIES: Category[] = [
     slug: 'stack',
     name: 'Stack',
     blurb: 'LIFO problems: bracket matching, spans, and nearest-element queries.',
+  },
+  {
+    slug: 'intervals',
+    name: 'Intervals',
+    blurb: 'Sort and sweep over ranges: merging, scheduling, and overlaps.',
   },
   {
     slug: 'trees',
@@ -838,6 +844,130 @@ public:
         code: LCA_BST,
       },
     ],
+  },
+
+  {
+    slug: 'merge-intervals',
+    category: 'intervals',
+    title: 'Merge Intervals',
+    difficulty: 'Medium',
+    blurb: 'Combine every group of overlapping ranges into single intervals.',
+    tags: ['LeetCode 56', 'Sorting', 'Greedy'],
+    statement:
+      'Given an array of intervals where intervals[i] = [start, end], merge all overlapping intervals and return the non-overlapping intervals that cover all the input ranges.',
+    intuition: [
+      'Picture each interval as a bar on a number line. Two bars overlap when one starts before the other ends — and merging them just means taking one bar from the earliest start to the latest end.',
+      'The key trick is to sort by start first. Once sorted, any intervals that overlap are guaranteed to be neighbours, so you never have to look backwards — you only compare each interval with the single "current" interval you are building.',
+      'Walk through the sorted list keeping one running interval, cur. For the next interval: if it starts at or before cur.end, it overlaps, so absorb it by pushing cur.end out to the larger of the two ends.',
+      'If it starts after cur.end, there is a gap — cur is finished and can never grow again, so save it and let the next interval become the new cur.',
+      'Why max(cur.end, next.end)? Because next might be completely inside cur (e.g. [1,10] then [2,3]); taking the max keeps the longer reach instead of shrinking it.',
+    ],
+    steps: [
+      'Sort the intervals by their start value.',
+      'Set cur = the first interval.',
+      'For each remaining interval next: if next.start ≤ cur.end, they overlap → set cur.end = max(cur.end, next.end).',
+      'Otherwise there is a gap → push cur to the result, then set cur = next.',
+      'After the loop, push the final cur. That list is the answer.',
+    ],
+    complexity: {
+      time: 'O(n log n) — the sort dominates; the single sweep afterwards is O(n).',
+      space: 'O(n) for the output list (O(log n)–O(n) for the sort itself).',
+    },
+    Visualizer: MergeIntervalsViz,
+    code: {
+      py: `def merge(intervals):
+    if not intervals:
+        return []
+    intervals.sort(key=lambda x: x[0])
+    res = []
+    cur = intervals[0]
+    for nxt in intervals[1:]:
+        if nxt[0] <= cur[1]:          # overlap
+            cur[1] = max(cur[1], nxt[1])
+        else:                          # gap
+            res.append(cur)
+            cur = nxt
+    res.append(cur)
+    return res
+`,
+      js: `function merge(intervals) {
+  if (intervals.length === 0) return [];
+  intervals.sort((a, b) => a[0] - b[0]);
+  const res = [];
+  let cur = intervals[0];
+  for (let i = 1; i < intervals.length; i++) {
+    const next = intervals[i];
+    if (next[0] <= cur[1]) {          // overlap
+      cur[1] = Math.max(cur[1], next[1]);
+    } else {                          // gap
+      res.push(cur);
+      cur = next;
+    }
+  }
+  res.push(cur);
+  return res;
+}
+`,
+      ts: `function merge(intervals: number[][]): number[][] {
+  if (intervals.length === 0) return [];
+  intervals.sort((a, b) => a[0] - b[0]);
+  const res: number[][] = [];
+  let cur = intervals[0];
+  for (let i = 1; i < intervals.length; i++) {
+    const next = intervals[i];
+    if (next[0] <= cur[1]) {          // overlap
+      cur[1] = Math.max(cur[1], next[1]);
+    } else {                          // gap
+      res.push(cur);
+      cur = next;
+    }
+  }
+  res.push(cur);
+  return res;
+}
+`,
+      java: `class Solution {
+    public int[][] merge(int[][] intervals) {
+        if (intervals.length == 0) return new int[0][];
+        Arrays.sort(intervals, (a, b) -> a[0] - b[0]);
+        List<int[]> res = new ArrayList<>();
+        int[] cur = intervals[0];
+        for (int i = 1; i < intervals.length; i++) {
+            int[] next = intervals[i];
+            if (next[0] <= cur[1]) {          // overlap
+                cur[1] = Math.max(cur[1], next[1]);
+            } else {                          // gap
+                res.add(cur);
+                cur = next;
+            }
+        }
+        res.add(cur);
+        return res.toArray(new int[res.size()][]);
+    }
+}
+`,
+      cpp: `class Solution {
+public:
+    vector<vector<int>> merge(vector<vector<int>>& intervals) {
+        if (intervals.empty()) return {};
+        sort(intervals.begin(), intervals.end());
+        vector<vector<int>> res;
+        vector<int> cur = intervals[0];
+        for (int i = 1; i < (int)intervals.size(); i++) {
+            vector<int>& next = intervals[i];
+            if (next[0] <= cur[1]) {          // overlap
+                cur[1] = max(cur[1], next[1]);
+            } else {                          // gap
+                res.push_back(cur);
+                cur = next;
+            }
+        }
+        res.push_back(cur);
+        return res;
+    }
+};
+`,
+    },
   },
 
   {
