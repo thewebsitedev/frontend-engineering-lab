@@ -3,6 +3,7 @@ import RedundantConnectionViz from './algos/redundant-connection/RedundantConnec
 import TwoSumViz from './algos/two-sum/TwoSumViz'
 import GroupAnagramsViz from './algos/group-anagrams/GroupAnagramsViz'
 import ValidParenthesesViz from './algos/valid-parentheses/ValidParenthesesViz'
+import NumberOfIslandsViz from './algos/number-of-islands/NumberOfIslandsViz'
 
 export const CATEGORIES: Category[] = [
   {
@@ -448,6 +449,7 @@ public:
       time: 'O(m · n) — every cell is visited a constant number of times.',
       space: 'O(m · n) worst case for the recursion stack.',
     },
+    Visualizer: NumberOfIslandsViz,
     code: {
       py: `def numIslands(grid):
     if not grid:
