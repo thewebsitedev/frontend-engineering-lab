@@ -336,13 +336,14 @@ export default function NumberOfIslandsViz() {
                   bg = '#DCE6EC'
                   fg = C.slate
                   border = `1.5px solid ${C.wire}`
-                  label = ''
+                  label = '0'
                 } else if (id !== null) {
+                  // sunk land: code sets grid[r][c] = '0'; color marks its island
                   const col = islandColor(id)
                   bg = col
                   fg = C.paper
                   border = `1.5px solid ${col}`
-                  label = String(id)
+                  label = '0'
                 } else {
                   bg = '#FBF9F3'
                   fg = C.ink
@@ -390,9 +391,9 @@ export default function NumberOfIslandsViz() {
               color: C.slate,
             }}
           >
-            <Legend swatch="#DCE6EC" border={C.wire} label="water" />
-            <Legend swatch="#FBF9F3" border={C.ink} label="land" />
-            <Legend swatch={C.go} border={C.go} label="island" />
+            <Legend swatch="#DCE6EC" border={C.wire} label="water (0)" />
+            <Legend swatch="#FBF9F3" border={C.ink} label="land (1)" />
+            <Legend swatch={C.go} border={C.go} label="sunk → 0, colored by island" />
             <Legend swatch="transparent" border={C.signal} dashed label="scanning" />
           </div>
 
