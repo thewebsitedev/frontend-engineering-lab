@@ -3,7 +3,12 @@
 import { useState, useMemo, useCallback } from 'react'
 import { C, MONO } from '../../theme'
 
-const STRS = ['eat', 'tea', 'tan', 'ate', 'nat', 'bat']
+const PRESETS: { name: string; words: string }[] = [
+  { name: 'classic', words: 'eat, tea, tan, ate, nat, bat' },
+  { name: 'all match', words: 'abc, bca, cab' },
+  { name: 'no match', words: 'cat, dog, bird' },
+  { name: 'trio', words: 'listen, silent, enlist, google' },
+]
 
 const sortKey = (w: string) => w.split('').sort().join('')
 
@@ -38,7 +43,7 @@ function snapshot(order: string[], map: Record<string, string[]>): Group[] {
   return order.map((k) => ({ key: k, words: [...map[k]] }))
 }
 
-function buildFrames(): { frames: Frame[]; groupCount: number } {
+function buildFrames(strs: string[]): { frames: Frame[]; groupCount: number } {
   const frames: Frame[] = []
   const map: Record<string, string[]> = {}
   const order: string[] = []
@@ -56,8 +61,8 @@ function buildFrames(): { frames: Frame[]; groupCount: number } {
     note: 'Create an empty map: a sorted-letter key → the list of words that share it.',
   })
 
-  for (let i = 0; i < STRS.length; i++) {
-    const word = STRS[i]
+  for (let i = 0; i < strs.length; i++) {
+    const word = strs[i]
 
     frames.push({
       kind: 'consider',
@@ -121,14 +126,46 @@ function buildFrames(): { frames: Frame[]; groupCount: number } {
     })
   }
 
+  frames.push({
+    kind: 'done',
+    line: 8,
+    i: null,
+    key: null,
+    groups: snapshot(order, map),
+    activeKey: null,
+    justAdded: null,
+    vars: {},
+    title: `${order.length} group${order.length === 1 ? '' : 's'}`,
+    note: `Every word is bucketed — return the ${order.length} group${order.length === 1 ? '' : 's'}.`,
+  })
+
   return { frames, groupCount: order.length }
 }
 
 export default function GroupAnagramsViz() {
-  const { frames, groupCount } = useMemo(() => buildFrames(), [])
+  const [input, setInput] = useState(PRESETS[0].words)
+
+  const strs = useMemo(
+    () =>
+      input
+        .split(/[,\s]+/)
+        .map((w) => w.trim())
+        .filter(Boolean)
+        .slice(0, 10),
+    [input],
+  )
+
+  const { frames, groupCount } = useMemo(() => buildFrames(strs), [strs])
   const [i, setI] = useState(0)
-  const f = frames[i]
-  const atEnd = i === frames.length - 1
+
+  // A new word list is a new problem — apply it and rewind.
+  const changeInput = useCallback((v: string) => {
+    setInput(v.replace(/[^a-zA-Z,\s]/g, ''))
+    setI(0)
+  }, [])
+
+  const f = frames[Math.min(i, frames.length - 1)]
+  const atEnd = i >= frames.length - 1
   const next = useCallback(
     () => setI((x) => Math.min(x + 1, frames.length - 1)),
     [frames.length],
@@ -151,16 +188,57 @@ export default function GroupAnagramsViz() {
         .ga-btn:active{transform:translateY(1px)} .ga-btn:disabled{opacity:.35;cursor:not-allowed}
         .ga-btn:focus-visible{outline:2px solid ${C.ink};outline-offset:2px}`}</style>
 
-      {/* Input header */}
-      <div
-        style={{
-          fontFamily: MONO,
-          fontSize: 13,
-          color: C.slate,
-          marginBottom: 14,
-        }}
-      >
-        strs = [{STRS.map((s) => `"${s}"`).join(', ')}]
+      {/* Editable input */}
+      <div style={{ marginBottom: 16 }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+          <label style={{ fontFamily: MONO, fontSize: 13, fontWeight: 700 }}>strs =</label>
+          <input
+            value={input}
+            spellCheck={false}
+            placeholder="eat, tea, tan, ate"
+            onChange={(e) => changeInput(e.target.value)}
+            style={{
+              fontFamily: MONO,
+              fontSize: 14,
+              fontWeight: 700,
+              padding: '8px 11px',
+              border: `1.5px solid ${C.ink}`,
+              borderRadius: 6,
+              background: '#FBF9F3',
+              color: C.ink,
+              minWidth: 260,
+              flex: 1,
+            }}
+          />
+        </div>
+        <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+          <span style={{ fontFamily: MONO, fontSize: 11, color: C.slate }}>try:</span>
+          {PRESETS.map((p) => {
+            const active = input === p.words
+            return (
+              <button
+                key={p.name}
+                className="ga-btn"
+                onClick={() => changeInput(p.words)}
+                style={{
+                  fontFamily: MONO,
+                  fontWeight: 700,
+                  fontSize: 12,
+                  padding: '4px 9px',
+                  borderRadius: 4,
+                  border: `1.5px solid ${active ? C.signal : C.wire}`,
+                  background: active ? C.signal : C.paper,
+                  color: active ? C.paper : C.ink,
+                }}
+              >
+                {p.name}
+              </button>
+            )
+          })}
+        </div>
+        <div style={{ fontFamily: MONO, fontSize: 11, color: C.slate, marginTop: 8 }}>
+          comma- or space-separated words (letters only)
+        </div>
       </div>
 
       <div
@@ -290,7 +368,10 @@ export default function GroupAnagramsViz() {
             words
           </div>
           <div style={{ display: 'flex', gap: 6, marginBottom: 14, flexWrap: 'wrap' }}>
-            {STRS.map((w, idx) => {
+            {strs.length === 0 && (
+              <span style={{ fontFamily: MONO, fontSize: 12, color: C.slate }}>(empty)</span>
+            )}
+            {strs.map((w, idx) => {
               const isCurrent = f.i === idx
               const isPlaced = placed.has(w) && !isCurrent
               let bg = '#FBF9F3'
@@ -402,11 +483,12 @@ export default function GroupAnagramsViz() {
                       {g.key}
                     </span>
                     <span style={{ color: C.slate, fontFamily: MONO, fontSize: 12 }}>→</span>
-                    {g.words.map((w) => {
-                      const justAdded = f.justAdded === w && isActive
+                    {g.words.map((w, wi) => {
+                      const justAdded =
+                        f.justAdded === w && isActive && wi === g.words.length - 1
                       return (
                         <span
-                          key={w}
+                          key={wi}
                           style={{
                             fontFamily: MONO,
                             fontWeight: 700,

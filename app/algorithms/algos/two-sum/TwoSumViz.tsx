@@ -3,8 +3,12 @@
 import { useState, useMemo, useCallback } from 'react'
 import { C, MONO } from '../../theme'
 
-const NUMS = [3, 2, 4]
-const TARGET = 6
+const PRESETS: { nums: string; target: string }[] = [
+  { nums: '3, 2, 4', target: '6' },
+  { nums: '2, 7, 11, 15', target: '9' },
+  { nums: '3, 3', target: '6' },
+  { nums: '1, 2, 3, 4', target: '8' },
+]
 
 // JS source shown in the trace panel (matches the default language).
 const CODE = [
@@ -35,7 +39,10 @@ type Frame = {
   note: string
 }
 
-function buildFrames(): { frames: Frame[]; answer: number[] | null } {
+function buildFrames(
+  nums: number[],
+  target: number,
+): { frames: Frame[]; answer: number[] | null } {
   const frames: Frame[] = []
   const seenMap: Record<number, number> = {}
   const seen: Entry[] = []
@@ -56,8 +63,8 @@ function buildFrames(): { frames: Frame[]; answer: number[] | null } {
     note: 'Create an empty map of value → index. We walk the array once.',
   })
 
-  for (let i = 0; i < NUMS.length; i++) {
-    const val = NUMS[i]
+  for (let i = 0; i < nums.length; i++) {
+    const val = nums[i]
 
     frames.push({
       kind: 'consider',
@@ -74,7 +81,7 @@ function buildFrames(): { frames: Frame[]; answer: number[] | null } {
       note: `Look at index ${i} — the value is ${val}.`,
     })
 
-    const need = TARGET - val
+    const need = target - val
     frames.push({
       kind: 'compute',
       line: 4,
@@ -87,7 +94,7 @@ function buildFrames(): { frames: Frame[]; answer: number[] | null } {
       answer: null,
       vars: { i, 'nums[i]': val, need },
       title: 'Compute the partner',
-      note: `need = target − nums[i] = ${TARGET} − ${val} = ${need}. Have we seen a ${need} already?`,
+      note: `need = target − nums[i] = ${target} − ${val} = ${need}. Have we seen a ${need} already?`,
     })
 
     if (need in seenMap) {
@@ -105,7 +112,7 @@ function buildFrames(): { frames: Frame[]; answer: number[] | null } {
         answer: [j, i],
         vars: { i, 'nums[i]': val, need },
         title: `Match: return [${j}, ${i}]`,
-        note: `${need} is in the map at index ${j}. nums[${j}] + nums[${i}] = ${need} + ${val} = ${TARGET}. Done.`,
+        note: `${need} is in the map at index ${j}. nums[${j}] + nums[${i}] = ${need} + ${val} = ${target}. Done.`,
       })
       break
     }
@@ -143,14 +150,64 @@ function buildFrames(): { frames: Frame[]; answer: number[] | null } {
     })
   }
 
+  if (answer === null) {
+    frames.push({
+      kind: 'none',
+      line: 9,
+      i: null,
+      need: null,
+      seen: [...seen],
+      checkKey: null,
+      foundIndex: null,
+      stored: null,
+      answer: null,
+      vars: {},
+      title: 'No pair found',
+      note: 'Reached the end of the array without finding two values that sum to the target.',
+    })
+  }
+
   return { frames, answer }
 }
 
 export default function TwoSumViz() {
-  const { frames, answer } = useMemo(() => buildFrames(), [])
+  const [numsText, setNumsText] = useState(PRESETS[0].nums)
+  const [targetText, setTargetText] = useState(PRESETS[0].target)
+
+  const nums = useMemo(
+    () =>
+      numsText
+        .split(',')
+        .map((t) => Number(t.trim()))
+        .filter((n) => Number.isFinite(n))
+        .slice(0, 12),
+    [numsText],
+  )
+  const target = useMemo(() => {
+    const t = Number(targetText.trim())
+    return Number.isFinite(t) ? t : 0
+  }, [targetText])
+
+  const { frames, answer } = useMemo(() => buildFrames(nums, target), [nums, target])
   const [i, setI] = useState(0)
-  const f = frames[i]
-  const atEnd = i === frames.length - 1
+
+  // Any input change is a new problem — apply it and rewind.
+  const changeNums = useCallback((v: string) => {
+    setNumsText(v.replace(/[^0-9,\s-]/g, ''))
+    setI(0)
+  }, [])
+  const changeTarget = useCallback((v: string) => {
+    setTargetText(v.replace(/[^0-9-]/g, ''))
+    setI(0)
+  }, [])
+  const applyPreset = useCallback((p: { nums: string; target: string }) => {
+    setNumsText(p.nums)
+    setTargetText(p.target)
+    setI(0)
+  }, [])
+
+  const f = frames[Math.min(i, frames.length - 1)]
+  const atEnd = i >= frames.length - 1
   const next = useCallback(
     () => setI((x) => Math.min(x + 1, frames.length - 1)),
     [frames.length],
@@ -170,24 +227,51 @@ export default function TwoSumViz() {
         .ts-btn:active{transform:translateY(1px)} .ts-btn:disabled{opacity:.35;cursor:not-allowed}
         .ts-btn:focus-visible{outline:2px solid ${C.ink};outline-offset:2px}`}</style>
 
-      {/* Input header */}
-      <div
-        style={{
-          display: 'flex',
-          gap: 16,
-          marginBottom: 14,
-          flexWrap: 'wrap',
-          alignItems: 'center',
-          fontFamily: MONO,
-          fontSize: 13,
-        }}
-      >
-        <span style={{ color: C.slate }}>
-          nums = [{NUMS.join(', ')}]
-        </span>
-        <span style={{ color: C.slate }}>
-          target = <b style={{ color: C.ink }}>{TARGET}</b>
-        </span>
+      {/* Editable input */}
+      <div style={{ marginBottom: 16 }}>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+          <label style={{ fontFamily: MONO, fontSize: 13, fontWeight: 700 }}>nums =</label>
+          <input
+            value={numsText}
+            spellCheck={false}
+            placeholder="3, 2, 4"
+            onChange={(e) => changeNums(e.target.value)}
+            style={inputStyle(200)}
+          />
+          <label style={{ fontFamily: MONO, fontSize: 13, fontWeight: 700 }}>target =</label>
+          <input
+            value={targetText}
+            spellCheck={false}
+            placeholder="6"
+            onChange={(e) => changeTarget(e.target.value)}
+            style={inputStyle(70)}
+          />
+        </div>
+        <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+          <span style={{ fontFamily: MONO, fontSize: 11, color: C.slate }}>try:</span>
+          {PRESETS.map((p) => {
+            const active = numsText === p.nums && targetText === p.target
+            return (
+              <button
+                key={`${p.nums}|${p.target}`}
+                className="ts-btn"
+                onClick={() => applyPreset(p)}
+                style={{
+                  fontFamily: MONO,
+                  fontWeight: 700,
+                  fontSize: 12,
+                  padding: '4px 9px',
+                  borderRadius: 4,
+                  border: `1.5px solid ${active ? C.signal : C.wire}`,
+                  background: active ? C.signal : C.paper,
+                  color: active ? C.paper : C.ink,
+                }}
+              >
+                [{p.nums}] → {p.target}
+              </button>
+            )
+          })}
+        </div>
       </div>
 
       <div
@@ -316,8 +400,11 @@ export default function TwoSumViz() {
           >
             array
           </div>
-          <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
-            {NUMS.map((n, idx) => {
+          <div style={{ display: 'flex', gap: 6, marginBottom: 14, flexWrap: 'wrap' }}>
+            {nums.length === 0 && (
+              <span style={{ fontFamily: MONO, fontSize: 12, color: C.slate }}>(empty)</span>
+            )}
+            {nums.map((n, idx) => {
               const inAnswer = f.answer?.includes(idx)
               const isCurrent = f.i === idx && !inAnswer
               const isPartner = f.foundIndex === idx && !inAnswer
@@ -542,6 +629,20 @@ export default function TwoSumViz() {
       </div>
     </div>
   )
+}
+
+function inputStyle(minWidth: number): React.CSSProperties {
+  return {
+    fontFamily: MONO,
+    fontSize: 14,
+    fontWeight: 700,
+    padding: '8px 11px',
+    border: `1.5px solid ${C.ink}`,
+    borderRadius: 6,
+    background: '#FBF9F3',
+    color: C.ink,
+    minWidth,
+  }
 }
 
 function btn(bg: string, fg: string, border?: boolean): React.CSSProperties {

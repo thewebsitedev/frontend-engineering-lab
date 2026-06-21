@@ -4,6 +4,7 @@ import TwoSumViz from './algos/two-sum/TwoSumViz'
 import GroupAnagramsViz from './algos/group-anagrams/GroupAnagramsViz'
 import ValidParenthesesViz from './algos/valid-parentheses/ValidParenthesesViz'
 import NumberOfIslandsViz from './algos/number-of-islands/NumberOfIslandsViz'
+import BinaryTreeLevelOrderViz from './algos/binary-tree-level-order/BinaryTreeLevelOrderViz'
 
 export const CATEGORIES: Category[] = [
   {
@@ -20,6 +21,11 @@ export const CATEGORIES: Category[] = [
     slug: 'stack',
     name: 'Stack',
     blurb: 'LIFO problems: bracket matching, spans, and nearest-element queries.',
+  },
+  {
+    slug: 'trees',
+    name: 'Trees',
+    blurb: 'Hierarchical data: depth-first and breadth-first traversals.',
   },
   {
     slug: 'graphs',
@@ -419,6 +425,133 @@ public:
             }
         }
         return st.empty();
+    }
+};
+`,
+    },
+  },
+
+  {
+    slug: 'binary-tree-level-order',
+    category: 'trees',
+    title: 'Binary Tree Level Order Traversal',
+    difficulty: 'Medium',
+    blurb: 'Return node values grouped level by level, top to bottom.',
+    tags: ['LeetCode 102', 'BFS', 'Queue'],
+    statement:
+      "Given the root of a binary tree, return the level-order traversal of its nodes' values — the values grouped by depth, read left to right, from the top level down.",
+    intuition: [
+      'Level order is a breadth-first walk: finish every node at depth 0 before touching depth 1, and so on.',
+      'A queue produces that order for free — it always hands back the oldest-enqueued node first (FIFO).',
+      'The trick to grouping by level is to record the queue’s size at the start of each round; exactly that many nodes make up the current level.',
+      'Dequeue that many nodes, collect their values, and enqueue their children for the next round.',
+    ],
+    steps: [
+      'If the tree is empty, return an empty list.',
+      'Put the root in a queue.',
+      'While the queue is non-empty, snapshot its length — that many nodes form the current level.',
+      'Dequeue each one, append its value to the level, and enqueue its non-null children.',
+      'Push the finished level onto the result and repeat.',
+    ],
+    complexity: {
+      time: 'O(n) — every node is enqueued and dequeued exactly once.',
+      space: 'O(n) — the queue holds up to the widest level of the tree.',
+    },
+    Visualizer: BinaryTreeLevelOrderViz,
+    code: {
+      py: `from collections import deque
+
+def levelOrder(root):
+    result = []
+    if not root:
+        return result
+    queue = deque([root])
+    while queue:
+        level = []
+        for _ in range(len(queue)):
+            node = queue.popleft()
+            level.append(node.val)
+            if node.left:
+                queue.append(node.left)
+            if node.right:
+                queue.append(node.right)
+        result.append(level)
+    return result
+`,
+      js: `function levelOrder(root) {
+  const result = [];
+  if (!root) return result;
+  const queue = [root];
+  while (queue.length) {
+    const level = [];
+    for (let n = queue.length; n > 0; n--) {
+      const node = queue.shift();
+      level.push(node.val);
+      if (node.left) queue.push(node.left);
+      if (node.right) queue.push(node.right);
+    }
+    result.push(level);
+  }
+  return result;
+}
+`,
+      ts: `function levelOrder(root: TreeNode | null): number[][] {
+  const result: number[][] = [];
+  if (!root) return result;
+  const queue: TreeNode[] = [root];
+  while (queue.length) {
+    const level: number[] = [];
+    for (let n = queue.length; n > 0; n--) {
+      const node = queue.shift()!;
+      level.push(node.val);
+      if (node.left) queue.push(node.left);
+      if (node.right) queue.push(node.right);
+    }
+    result.push(level);
+  }
+  return result;
+}
+`,
+      java: `class Solution {
+    public List<List<Integer>> levelOrder(TreeNode root) {
+        List<List<Integer>> result = new ArrayList<>();
+        if (root == null) return result;
+        Queue<TreeNode> queue = new LinkedList<>();
+        queue.offer(root);
+        while (!queue.isEmpty()) {
+            int size = queue.size();
+            List<Integer> level = new ArrayList<>();
+            for (int n = 0; n < size; n++) {
+                TreeNode node = queue.poll();
+                level.add(node.val);
+                if (node.left != null) queue.offer(node.left);
+                if (node.right != null) queue.offer(node.right);
+            }
+            result.add(level);
+        }
+        return result;
+    }
+}
+`,
+      cpp: `class Solution {
+public:
+    vector<vector<int>> levelOrder(TreeNode* root) {
+        vector<vector<int>> result;
+        if (!root) return result;
+        queue<TreeNode*> q;
+        q.push(root);
+        while (!q.empty()) {
+            int size = q.size();
+            vector<int> level;
+            for (int n = 0; n < size; n++) {
+                TreeNode* node = q.front(); q.pop();
+                level.push_back(node->val);
+                if (node->left) q.push(node->left);
+                if (node->right) q.push(node->right);
+            }
+            result.push_back(level);
+        }
+        return result;
     }
 };
 `,
