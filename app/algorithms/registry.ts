@@ -16,6 +16,7 @@ import LongestSubstringViz from './algos/longest-substring/LongestSubstringViz'
 import MeetingRoomsViz from './algos/meeting-rooms/MeetingRoomsViz'
 import LRUCacheViz from './algos/lru-cache/LRUCacheViz'
 import TrieViz from './algos/trie/TrieViz'
+import WordSearchViz from './algos/word-search/WordSearchViz'
 
 // Lowest Common Ancestor has two notable solutions, shared below.
 const LCA_RECURSIVE: Record<Lang, string> = {
@@ -1278,6 +1279,120 @@ public:
 `,
 }
 
+// Word Search: DFS from each cell, marking the path used and backtracking on dead ends.
+const WORD_SEARCH: Record<Lang, string> = {
+  py: `def exist(board, word):
+    R, C = len(board), len(board[0])
+
+    def dfs(r, c, i):
+        if i == len(word):
+            return True
+        if r < 0 or c < 0 or r >= R or c >= C:
+            return False
+        if board[r][c] != word[i]:
+            return False
+        tmp = board[r][c]
+        board[r][c] = '#'                     # mark used
+        found = (dfs(r + 1, c, i + 1) or dfs(r - 1, c, i + 1) or
+                 dfs(r, c + 1, i + 1) or dfs(r, c - 1, i + 1))
+        board[r][c] = tmp                     # backtrack
+        return found
+
+    for r in range(R):
+        for c in range(C):
+            if dfs(r, c, 0):
+                return True
+    return False
+`,
+  js: `function exist(board, word) {
+  const R = board.length, C = board[0].length;
+  function dfs(r, c, i) {
+    if (i === word.length) return true;
+    if (r < 0 || c < 0 || r >= R || c >= C) return false;
+    if (board[r][c] !== word[i]) return false;
+    const tmp = board[r][c];
+    board[r][c] = '#';                        // mark used
+    const found = dfs(r + 1, c, i + 1) || dfs(r - 1, c, i + 1)
+               || dfs(r, c + 1, i + 1) || dfs(r, c - 1, i + 1);
+    board[r][c] = tmp;                         // backtrack
+    return found;
+  }
+  for (let r = 0; r < R; r++)
+    for (let c = 0; c < C; c++)
+      if (dfs(r, c, 0)) return true;
+  return false;
+}
+`,
+  ts: `function exist(board: string[][], word: string): boolean {
+  const R = board.length, C = board[0].length;
+  function dfs(r: number, c: number, i: number): boolean {
+    if (i === word.length) return true;
+    if (r < 0 || c < 0 || r >= R || c >= C) return false;
+    if (board[r][c] !== word[i]) return false;
+    const tmp = board[r][c];
+    board[r][c] = '#';                        // mark used
+    const found = dfs(r + 1, c, i + 1) || dfs(r - 1, c, i + 1)
+               || dfs(r, c + 1, i + 1) || dfs(r, c - 1, i + 1);
+    board[r][c] = tmp;                         // backtrack
+    return found;
+  }
+  for (let r = 0; r < R; r++)
+    for (let c = 0; c < C; c++)
+      if (dfs(r, c, 0)) return true;
+  return false;
+}
+`,
+  java: `class Solution {
+    private int R, C;
+    private char[][] board;
+    private String word;
+
+    public boolean exist(char[][] board, String word) {
+        this.board = board; this.word = word;
+        R = board.length; C = board[0].length;
+        for (int r = 0; r < R; r++)
+            for (int c = 0; c < C; c++)
+                if (dfs(r, c, 0)) return true;
+        return false;
+    }
+    private boolean dfs(int r, int c, int i) {
+        if (i == word.length()) return true;
+        if (r < 0 || c < 0 || r >= R || c >= C) return false;
+        if (board[r][c] != word.charAt(i)) return false;
+        char tmp = board[r][c];
+        board[r][c] = '#';                    // mark used
+        boolean found = dfs(r + 1, c, i + 1) || dfs(r - 1, c, i + 1)
+                     || dfs(r, c + 1, i + 1) || dfs(r, c - 1, i + 1);
+        board[r][c] = tmp;                    // backtrack
+        return found;
+    }
+}
+`,
+  cpp: `class Solution {
+    int R, C;
+    bool dfs(vector<vector<char>>& board, const string& word, int r, int c, int i) {
+        if (i == (int)word.size()) return true;
+        if (r < 0 || c < 0 || r >= R || c >= C) return false;
+        if (board[r][c] != word[i]) return false;
+        char tmp = board[r][c];
+        board[r][c] = '#';                    // mark used
+        bool found = dfs(board, word, r + 1, c, i + 1) || dfs(board, word, r - 1, c, i + 1)
+                  || dfs(board, word, r, c + 1, i + 1) || dfs(board, word, r, c - 1, i + 1);
+        board[r][c] = tmp;                    // backtrack
+        return found;
+    }
+public:
+    bool exist(vector<vector<char>>& board, string word) {
+        R = board.size(); C = board[0].size();
+        for (int r = 0; r < R; r++)
+            for (int c = 0; c < C; c++)
+                if (dfs(board, word, r, c, 0)) return true;
+        return false;
+    }
+};
+`,
+}
+
 export const CATEGORIES: Category[] = [
   {
     slug: 'union-find',
@@ -1328,6 +1443,11 @@ export const CATEGORIES: Category[] = [
     slug: 'tries',
     name: 'Tries',
     blurb: 'Prefix trees for fast word and prefix lookups.',
+  },
+  {
+    slug: 'backtracking',
+    name: 'Backtracking',
+    blurb: 'Explore choices depth-first, undoing each one when it dead-ends.',
   },
   {
     slug: 'dynamic-programming',
@@ -2318,6 +2438,36 @@ public:
     },
     Visualizer: TrieViz,
     code: TRIE_CODE,
+  },
+
+  {
+    slug: 'word-search',
+    category: 'backtracking',
+    title: 'Word Search',
+    difficulty: 'Medium',
+    blurb: 'Trace a word through a grid of letters using DFS with backtracking.',
+    tags: ['LeetCode 79', 'Backtracking', 'DFS', 'Matrix'],
+    statement:
+      'Given an m × n grid of characters and a word, return true if the word exists in the grid. The word is built from letters of sequentially adjacent cells (horizontally or vertically neighbouring); the same cell may not be used more than once in a single path.',
+    intuition: [
+      'Any cell could be the first letter, so try starting a depth-first search from every cell.',
+      'From a cell, the DFS matches word[i] here, then recurses into the four neighbours looking for word[i+1] — a classic “try a choice, recurse, undo” backtracking shape.',
+      'To stop a path from reusing a cell, temporarily overwrite it (e.g. with “#”) before recursing, then restore it afterwards. That restore is the backtrack.',
+      'A branch dies on three conditions: you run off the grid, the letter does not match, or the cell is already in the current path. If any neighbour reaches the end of the word, the answer is true.',
+    ],
+    steps: [
+      'For each cell, start a DFS with index i = 0.',
+      'In dfs(r, c, i): if i equals the word length, the whole word matched → true.',
+      'Fail if out of bounds, or the cell does not equal word[i].',
+      'Mark the cell used, recurse into all four neighbours for i + 1, then restore the cell (backtrack).',
+      'Return true if any start cell’s DFS succeeds; otherwise false.',
+    ],
+    complexity: {
+      time: 'O(m · n · 4^L) worst case, where L is the word length (each step branches into ~4 directions).',
+      space: 'O(L) for the recursion stack (plus in-place marking, no extra grid).',
+    },
+    Visualizer: WordSearchViz,
+    code: WORD_SEARCH,
   },
 
   {
