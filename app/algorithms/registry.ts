@@ -14,6 +14,7 @@ import KClosestPointsViz from './algos/k-closest-points/KClosestPointsViz'
 import ProductExceptSelfViz from './algos/product-except-self/ProductExceptSelfViz'
 import LongestSubstringViz from './algos/longest-substring/LongestSubstringViz'
 import MeetingRoomsViz from './algos/meeting-rooms/MeetingRoomsViz'
+import LRUCacheViz from './algos/lru-cache/LRUCacheViz'
 
 // Lowest Common Ancestor has two notable solutions, shared below.
 const LCA_RECURSIVE: Record<Lang, string> = {
@@ -795,6 +796,325 @@ public:
 `,
 }
 
+// LRU Cache: the concise ordered-Map version (animated) and the classic hashmap + DLL.
+const LRU_MAP: Record<Lang, string> = {
+  py: `from collections import OrderedDict
+
+class LRUCache:
+    def __init__(self, capacity):
+        self.cap = capacity
+        self.map = OrderedDict()      # oldest → newest
+
+    def get(self, key):
+        if key not in self.map:
+            return -1
+        self.map.move_to_end(key)     # renew as newest
+        return self.map[key]
+
+    def put(self, key, value):
+        if key in self.map:
+            self.map.move_to_end(key)
+        self.map[key] = value
+        if len(self.map) > self.cap:
+            self.map.popitem(last=False)   # evict oldest
+`,
+  js: `class LRUCache {
+  constructor(capacity) {
+    this.cap = capacity;
+    this.map = new Map();   // oldest → newest
+  }
+  get(key) {
+    if (!this.map.has(key)) return -1;
+    const v = this.map.get(key);
+    this.map.delete(key);
+    this.map.set(key, v);    // renew as newest
+    return v;
+  }
+  put(key, value) {
+    if (this.map.has(key)) this.map.delete(key);
+    this.map.set(key, value);
+    if (this.map.size > this.cap) {
+      const lru = this.map.keys().next().value;
+      this.map.delete(lru);   // evict oldest
+    }
+  }
+}
+`,
+  ts: `class LRUCache {
+  private cap: number;
+  private map = new Map<number, number>();   // oldest → newest
+  constructor(capacity: number) {
+    this.cap = capacity;
+  }
+  get(key: number): number {
+    if (!this.map.has(key)) return -1;
+    const v = this.map.get(key)!;
+    this.map.delete(key);
+    this.map.set(key, v);    // renew as newest
+    return v;
+  }
+  put(key: number, value: number): void {
+    if (this.map.has(key)) this.map.delete(key);
+    this.map.set(key, value);
+    if (this.map.size > this.cap) {
+      const lru = this.map.keys().next().value as number;
+      this.map.delete(lru);   // evict oldest
+    }
+  }
+}
+`,
+  java: `class LRUCache {
+    private final int cap;
+    // LinkedHashMap keeps insertion order; accessOrder=true moves reads to the end.
+    private final LinkedHashMap<Integer, Integer> map;
+
+    public LRUCache(int capacity) {
+        this.cap = capacity;
+        this.map = new LinkedHashMap<>(16, 0.75f, true) {
+            protected boolean removeEldestEntry(Map.Entry<Integer, Integer> e) {
+                return size() > cap;   // evict oldest automatically
+            }
+        };
+    }
+    public int get(int key) {
+        return map.getOrDefault(key, -1);
+    }
+    public void put(int key, int value) {
+        map.put(key, value);
+    }
+}
+`,
+  cpp: `class LRUCache {
+    int cap;
+    list<pair<int,int>> items;                       // front = newest, back = oldest
+    unordered_map<int, list<pair<int,int>>::iterator> pos;
+public:
+    LRUCache(int capacity) : cap(capacity) {}
+    int get(int key) {
+        if (!pos.count(key)) return -1;
+        items.splice(items.begin(), items, pos[key]);   // move to front
+        return pos[key]->second;
+    }
+    void put(int key, int value) {
+        if (pos.count(key)) items.erase(pos[key]);
+        items.push_front({key, value});
+        pos[key] = items.begin();
+        if ((int)items.size() > cap) {
+            pos.erase(items.back().first);
+            items.pop_back();                            // evict oldest
+        }
+    }
+};
+`,
+}
+
+const LRU_DLL: Record<Lang, string> = {
+  py: `class Node:
+    def __init__(self, key=0, val=0):
+        self.key, self.val = key, val
+        self.prev = self.next = None
+
+class LRUCache:
+    def __init__(self, capacity):
+        self.cap = capacity
+        self.map = {}                 # key -> Node
+        self.head, self.tail = Node(), Node()   # sentinels: head=MRU side, tail=LRU side
+        self.head.next, self.tail.prev = self.tail, self.head
+
+    def _remove(self, node):
+        node.prev.next, node.next.prev = node.next, node.prev
+
+    def _add_front(self, node):       # right after head = most recent
+        node.next, node.prev = self.head.next, self.head
+        self.head.next.prev = node
+        self.head.next = node
+
+    def get(self, key):
+        if key not in self.map:
+            return -1
+        node = self.map[key]
+        self._remove(node)
+        self._add_front(node)
+        return node.val
+
+    def put(self, key, value):
+        if key in self.map:
+            self._remove(self.map[key])
+        node = Node(key, value)
+        self.map[key] = node
+        self._add_front(node)
+        if len(self.map) > self.cap:
+            lru = self.tail.prev      # node before tail = least recent
+            self._remove(lru)
+            del self.map[lru.key]
+`,
+  js: `class Node {
+  constructor(key = 0, val = 0) {
+    this.key = key; this.val = val;
+    this.prev = null; this.next = null;
+  }
+}
+
+class LRUCache {
+  constructor(capacity) {
+    this.cap = capacity;
+    this.map = new Map();              // key -> Node
+    this.head = new Node();            // MRU side
+    this.tail = new Node();            // LRU side
+    this.head.next = this.tail;
+    this.tail.prev = this.head;
+  }
+  _remove(node) {
+    node.prev.next = node.next;
+    node.next.prev = node.prev;
+  }
+  _addFront(node) {                    // right after head = most recent
+    node.next = this.head.next;
+    node.prev = this.head;
+    this.head.next.prev = node;
+    this.head.next = node;
+  }
+  get(key) {
+    if (!this.map.has(key)) return -1;
+    const node = this.map.get(key);
+    this._remove(node);
+    this._addFront(node);
+    return node.val;
+  }
+  put(key, value) {
+    if (this.map.has(key)) this._remove(this.map.get(key));
+    const node = new Node(key, value);
+    this.map.set(key, node);
+    this._addFront(node);
+    if (this.map.size > this.cap) {
+      const lru = this.tail.prev;      // node before tail = least recent
+      this._remove(lru);
+      this.map.delete(lru.key);
+    }
+  }
+}
+`,
+  ts: `class DNode {
+  key: number; val: number;
+  prev: DNode | null = null;
+  next: DNode | null = null;
+  constructor(key = 0, val = 0) { this.key = key; this.val = val; }
+}
+
+class LRUCache {
+  private cap: number;
+  private map = new Map<number, DNode>();
+  private head = new DNode();   // MRU side
+  private tail = new DNode();   // LRU side
+  constructor(capacity: number) {
+    this.cap = capacity;
+    this.head.next = this.tail;
+    this.tail.prev = this.head;
+  }
+  private remove(node: DNode) {
+    node.prev!.next = node.next;
+    node.next!.prev = node.prev;
+  }
+  private addFront(node: DNode) {
+    node.next = this.head.next;
+    node.prev = this.head;
+    this.head.next!.prev = node;
+    this.head.next = node;
+  }
+  get(key: number): number {
+    const node = this.map.get(key);
+    if (!node) return -1;
+    this.remove(node);
+    this.addFront(node);
+    return node.val;
+  }
+  put(key: number, value: number): void {
+    const existing = this.map.get(key);
+    if (existing) this.remove(existing);
+    const node = new DNode(key, value);
+    this.map.set(key, node);
+    this.addFront(node);
+    if (this.map.size > this.cap) {
+      const lru = this.tail.prev!;
+      this.remove(lru);
+      this.map.delete(lru.key);
+    }
+  }
+}
+`,
+  java: `class LRUCache {
+    class Node { int key, val; Node prev, next; Node(int k, int v) { key = k; val = v; } }
+
+    private final int cap;
+    private final Map<Integer, Node> map = new HashMap<>();
+    private final Node head = new Node(0, 0);   // MRU side
+    private final Node tail = new Node(0, 0);   // LRU side
+
+    public LRUCache(int capacity) {
+        cap = capacity;
+        head.next = tail;
+        tail.prev = head;
+    }
+    private void remove(Node n) { n.prev.next = n.next; n.next.prev = n.prev; }
+    private void addFront(Node n) {
+        n.next = head.next; n.prev = head;
+        head.next.prev = n; head.next = n;
+    }
+    public int get(int key) {
+        if (!map.containsKey(key)) return -1;
+        Node n = map.get(key);
+        remove(n); addFront(n);
+        return n.val;
+    }
+    public void put(int key, int value) {
+        if (map.containsKey(key)) remove(map.get(key));
+        Node n = new Node(key, value);
+        map.put(key, n);
+        addFront(n);
+        if (map.size() > cap) {
+            Node lru = tail.prev;
+            remove(lru);
+            map.remove(lru.key);
+        }
+    }
+}
+`,
+  cpp: `class LRUCache {
+    struct Node { int key, val; Node *prev, *next; Node(int k, int v) : key(k), val(v), prev(nullptr), next(nullptr) {} };
+    int cap;
+    unordered_map<int, Node*> map;
+    Node *head, *tail;   // head = MRU side, tail = LRU side
+    void remove(Node* n) { n->prev->next = n->next; n->next->prev = n->prev; }
+    void addFront(Node* n) {
+        n->next = head->next; n->prev = head;
+        head->next->prev = n; head->next = n;
+    }
+public:
+    LRUCache(int capacity) : cap(capacity) {
+        head = new Node(0, 0); tail = new Node(0, 0);
+        head->next = tail; tail->prev = head;
+    }
+    int get(int key) {
+        if (!map.count(key)) return -1;
+        Node* n = map[key];
+        remove(n); addFront(n);
+        return n->val;
+    }
+    void put(int key, int value) {
+        if (map.count(key)) remove(map[key]);
+        Node* n = new Node(key, value);
+        map[key] = n;
+        addFront(n);
+        if ((int)map.size() > cap) {
+            Node* lru = tail->prev;
+            remove(lru);
+            map.erase(lru->key);
+        }
+    }
+};
+`,
+}
+
 export const CATEGORIES: Category[] = [
   {
     slug: 'union-find',
@@ -835,6 +1155,11 @@ export const CATEGORIES: Category[] = [
     slug: 'sliding-window',
     name: 'Sliding Window',
     blurb: 'Slide a range over a sequence, expanding and shrinking as you go.',
+  },
+  {
+    slug: 'linked-list',
+    name: 'Linked List',
+    blurb: 'Pointer juggling, ordered structures, and O(1) reordering tricks.',
   },
   {
     slug: 'dynamic-programming',
@@ -1751,6 +2076,49 @@ public:
         blurb:
           'Sort by start and keep a min-heap of end times. Reuse the soonest-freeing room when possible; the peak heap size is the rooms needed. This is the version animated above.',
         code: MEETING_253,
+      },
+    ],
+  },
+
+  {
+    slug: 'lru-cache',
+    category: 'linked-list',
+    title: 'LRU Cache',
+    difficulty: 'Medium',
+    blurb: 'Design a fixed-size cache that evicts the least-recently-used key — all in O(1).',
+    tags: ['LeetCode 146', 'Hash Map', 'Linked List', 'Design'],
+    statement:
+      'Design a data structure for a Least Recently Used (LRU) cache supporting get(key) and put(key, value) in O(1) average time. get returns the value if present (and marks it as recently used) or -1. put inserts/updates a key (marking it recently used); if this exceeds the capacity, evict the least recently used key.',
+    intuition: [
+      'Two needs: O(1) lookup by key, and O(1) knowledge of which key is the “oldest”. A hash map gives the first; an ordering that you can update cheaply gives the second.',
+      'Keep entries in recency order: least-recently-used at one end, most-recently-used at the other. Every access moves its entry to the MRU end.',
+      'On get, if the key exists, move it to the MRU end and return it. On put, insert/refresh at the MRU end.',
+      'When size exceeds capacity, the entry at the LRU end is exactly the one to evict. A JavaScript Map already preserves insertion order, so delete + re-set renews recency — or use an explicit hashmap + doubly linked list.',
+    ],
+    steps: [
+      'get(key): miss → return -1. Hit → delete the key and re-insert it so it becomes the newest, then return its value.',
+      'put(key,value): if the key exists, delete it first.',
+      'Insert key at the most-recently-used end.',
+      'If size now exceeds capacity, delete the least-recently-used entry (the oldest).',
+    ],
+    complexity: {
+      time: 'O(1) average for both get and put.',
+      space: 'O(capacity) for the stored entries.',
+    },
+    Visualizer: LRUCacheViz,
+    code: LRU_MAP,
+    solutions: [
+      {
+        name: '1 · Ordered Map (concise)',
+        blurb:
+          'Exploit insertion-ordered maps: delete + re-set renews a key as newest, and the first key is always the LRU to evict. This is the version animated above.',
+        code: LRU_MAP,
+      },
+      {
+        name: '2 · HashMap + Doubly Linked List (classic)',
+        blurb:
+          'The textbook design: a hashmap from key to a node in a doubly linked list with head (MRU) and tail (LRU) sentinels. Unlink and re-link nodes in O(1). This is what the ordered-map trick does under the hood.',
+        code: LRU_DLL,
       },
     ],
   },
