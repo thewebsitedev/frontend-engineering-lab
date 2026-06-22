@@ -12,6 +12,7 @@ import CourseScheduleViz from './algos/course-schedule/CourseScheduleViz'
 import CloneGraphViz from './algos/clone-graph/CloneGraphViz'
 import KClosestPointsViz from './algos/k-closest-points/KClosestPointsViz'
 import ProductExceptSelfViz from './algos/product-except-self/ProductExceptSelfViz'
+import LongestSubstringViz from './algos/longest-substring/LongestSubstringViz'
 
 // Lowest Common Ancestor has two notable solutions, shared below.
 const LCA_RECURSIVE: Record<Lang, string> = {
@@ -591,6 +592,84 @@ public:
 `,
 }
 
+// Longest Substring Without Repeating Characters: sliding window with a last-seen map.
+const LONGEST_SUBSTRING: Record<Lang, string> = {
+  py: `def lengthOfLongestSubstring(s):
+    seen = {}            # char -> last index
+    left = 0
+    best = 0
+    for right, c in enumerate(s):
+        if c in seen and seen[c] >= left:
+            left = seen[c] + 1     # jump past the previous occurrence
+        seen[c] = right
+        best = max(best, right - left + 1)
+    return best
+`,
+  js: `function lengthOfLongestSubstring(s) {
+  const seen = new Map();   // char -> last index
+  let left = 0;
+  let best = 0;
+  for (let right = 0; right < s.length; right++) {
+    const c = s[right];
+    if (seen.has(c) && seen.get(c) >= left) {
+      left = seen.get(c) + 1;     // jump past the previous occurrence
+    }
+    seen.set(c, right);
+    best = Math.max(best, right - left + 1);
+  }
+  return best;
+}
+`,
+  ts: `function lengthOfLongestSubstring(s: string): number {
+  const seen = new Map<string, number>();   // char -> last index
+  let left = 0;
+  let best = 0;
+  for (let right = 0; right < s.length; right++) {
+    const c = s[right];
+    if (seen.has(c) && seen.get(c)! >= left) {
+      left = seen.get(c)! + 1;     // jump past the previous occurrence
+    }
+    seen.set(c, right);
+    best = Math.max(best, right - left + 1);
+  }
+  return best;
+}
+`,
+  java: `class Solution {
+    public int lengthOfLongestSubstring(String s) {
+        Map<Character, Integer> seen = new HashMap<>();   // char -> last index
+        int left = 0, best = 0;
+        for (int right = 0; right < s.length(); right++) {
+            char c = s.charAt(right);
+            if (seen.containsKey(c) && seen.get(c) >= left) {
+                left = seen.get(c) + 1;     // jump past the previous occurrence
+            }
+            seen.put(c, right);
+            best = Math.max(best, right - left + 1);
+        }
+        return best;
+    }
+}
+`,
+  cpp: `class Solution {
+public:
+    int lengthOfLongestSubstring(string s) {
+        unordered_map<char, int> seen;   // char -> last index
+        int left = 0, best = 0;
+        for (int right = 0; right < (int)s.size(); right++) {
+            char c = s[right];
+            if (seen.count(c) && seen[c] >= left) {
+                left = seen[c] + 1;     // jump past the previous occurrence
+            }
+            seen[c] = right;
+            best = max(best, right - left + 1);
+        }
+        return best;
+    }
+};
+`,
+}
+
 export const CATEGORIES: Category[] = [
   {
     slug: 'union-find',
@@ -626,6 +705,11 @@ export const CATEGORIES: Category[] = [
     slug: 'heap',
     name: 'Heap / Priority Queue',
     blurb: 'Keep the best k items on hand without sorting everything.',
+  },
+  {
+    slug: 'sliding-window',
+    name: 'Sliding Window',
+    blurb: 'Slide a range over a sequence, expanding and shrinking as you go.',
   },
   {
     slug: 'dynamic-programming',
@@ -1177,6 +1261,36 @@ public:
         code: PRODUCT_TWO_ARRAYS,
       },
     ],
+  },
+
+  {
+    slug: 'longest-substring',
+    category: 'sliding-window',
+    title: 'Longest Substring Without Repeating Characters',
+    difficulty: 'Medium',
+    blurb: 'Slide a window that never repeats a character and track its longest length.',
+    tags: ['LeetCode 3', 'Sliding Window', 'Hash Map'],
+    statement:
+      'Given a string s, find the length of the longest substring without repeating characters. A substring is a contiguous run of characters.',
+    intuition: [
+      'Keep a window [left, right] that always contains distinct characters. Move right forward one step at a time to grow it.',
+      'Remember the last index where you saw each character in a map. When the new character already sits inside the window, you must shrink from the left.',
+      'Instead of moving left one step at a time, jump it directly to one past the previous occurrence — that instantly removes the repeat.',
+      'After each step the window is valid again, so record its length and keep the best you have seen.',
+    ],
+    steps: [
+      'Track left (window start), best length, and a map of each character’s last index.',
+      'For each right, read c = s[right].',
+      'If c was seen at an index ≥ left, move left to that index + 1.',
+      'Record c’s new index, then update best with the current window length right − left + 1.',
+      'Return best after scanning the whole string.',
+    ],
+    complexity: {
+      time: 'O(n) — right scans once and left only moves forward.',
+      space: 'O(min(n, alphabet)) for the last-seen map.',
+    },
+    Visualizer: LongestSubstringViz,
+    code: LONGEST_SUBSTRING,
   },
 
   {
