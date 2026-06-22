@@ -13,6 +13,7 @@ import CloneGraphViz from './algos/clone-graph/CloneGraphViz'
 import KClosestPointsViz from './algos/k-closest-points/KClosestPointsViz'
 import ProductExceptSelfViz from './algos/product-except-self/ProductExceptSelfViz'
 import LongestSubstringViz from './algos/longest-substring/LongestSubstringViz'
+import MeetingRoomsViz from './algos/meeting-rooms/MeetingRoomsViz'
 
 // Lowest Common Ancestor has two notable solutions, shared below.
 const LCA_RECURSIVE: Record<Lang, string> = {
@@ -665,6 +666,130 @@ public:
             best = max(best, right - left + 1);
         }
         return best;
+    }
+};
+`,
+}
+
+// Meeting Rooms 252 (can attend all?) — sort, then check neighbouring overlaps.
+const MEETING_252: Record<Lang, string> = {
+  py: `def canAttendMeetings(intervals):
+    intervals.sort(key=lambda x: x[0])
+    for i in range(1, len(intervals)):
+        if intervals[i][0] < intervals[i - 1][1]:
+            return False          # this meeting starts before the last one ends
+    return True
+`,
+  js: `function canAttendMeetings(intervals) {
+  intervals.sort((a, b) => a[0] - b[0]);
+  for (let i = 1; i < intervals.length; i++) {
+    if (intervals[i][0] < intervals[i - 1][1]) {
+      return false;     // starts before the previous meeting ends
+    }
+  }
+  return true;
+}
+`,
+  ts: `function canAttendMeetings(intervals: number[][]): boolean {
+  intervals.sort((a, b) => a[0] - b[0]);
+  for (let i = 1; i < intervals.length; i++) {
+    if (intervals[i][0] < intervals[i - 1][1]) {
+      return false;     // starts before the previous meeting ends
+    }
+  }
+  return true;
+}
+`,
+  java: `class Solution {
+    public boolean canAttendMeetings(int[][] intervals) {
+        Arrays.sort(intervals, (a, b) -> a[0] - b[0]);
+        for (int i = 1; i < intervals.length; i++) {
+            if (intervals[i][0] < intervals[i - 1][1]) {
+                return false;   // starts before the previous meeting ends
+            }
+        }
+        return true;
+    }
+}
+`,
+  cpp: `class Solution {
+public:
+    bool canAttendMeetings(vector<vector<int>>& intervals) {
+        sort(intervals.begin(), intervals.end());
+        for (int i = 1; i < (int)intervals.size(); i++) {
+            if (intervals[i][0] < intervals[i - 1][1]) {
+                return false;   // starts before the previous meeting ends
+            }
+        }
+        return true;
+    }
+};
+`,
+}
+
+// Meeting Rooms 253 (minimum rooms) — sort by start, min-heap of end times.
+const MEETING_253: Record<Lang, string> = {
+  py: `import heapq
+
+def minMeetingRooms(intervals):
+    intervals.sort(key=lambda x: x[0])
+    heap = []                       # end times of meetings in progress
+    for start, end in intervals:
+        if heap and heap[0] <= start:
+            heapq.heappop(heap)     # earliest meeting ended; reuse its room
+        heapq.heappush(heap, end)
+    return len(heap)
+`,
+  js: `function minMeetingRooms(intervals) {
+  intervals.sort((a, b) => a[0] - b[0]);
+  const heap = new MinHeap();        // end times of meetings in progress
+  for (const [start, end] of intervals) {
+    if (heap.size() > 0 && heap.peek() <= start) {
+      heap.pop();                    // earliest meeting ended; reuse its room
+    }
+    heap.push(end);
+  }
+  return heap.size();
+}
+`,
+  ts: `function minMeetingRooms(intervals: number[][]): number {
+  intervals.sort((a, b) => a[0] - b[0]);
+  const heap = new MinHeap();        // end times of meetings in progress
+  for (const [start, end] of intervals) {
+    if (heap.size() > 0 && heap.peek() <= start) {
+      heap.pop();                    // earliest meeting ended; reuse its room
+    }
+    heap.push(end);
+  }
+  return heap.size();
+}
+`,
+  java: `class Solution {
+    public int minMeetingRooms(int[][] intervals) {
+        Arrays.sort(intervals, (a, b) -> a[0] - b[0]);
+        PriorityQueue<Integer> heap = new PriorityQueue<>();   // min-heap of end times
+        for (int[] iv : intervals) {
+            if (!heap.isEmpty() && heap.peek() <= iv[0]) {
+                heap.poll();          // earliest meeting ended; reuse its room
+            }
+            heap.offer(iv[1]);
+        }
+        return heap.size();
+    }
+}
+`,
+  cpp: `class Solution {
+public:
+    int minMeetingRooms(vector<vector<int>>& intervals) {
+        sort(intervals.begin(), intervals.end());
+        priority_queue<int, vector<int>, greater<int>> heap;   // min-heap of end times
+        for (auto& iv : intervals) {
+            if (!heap.empty() && heap.top() <= iv[0]) {
+                heap.pop();           // earliest meeting ended; reuse its room
+            }
+            heap.push(iv[1]);
+        }
+        return heap.size();
     }
 };
 `,
@@ -1585,6 +1710,49 @@ public:
 };
 `,
     },
+  },
+
+  {
+    slug: 'meeting-rooms',
+    category: 'intervals',
+    title: 'Meeting Rooms',
+    difficulty: 'Medium',
+    blurb: 'Can one person attend every meeting (252) — and how many rooms are needed (253)?',
+    tags: ['LeetCode 252', 'LeetCode 253', 'Intervals', 'Heap'],
+    statement:
+      'Given an array of meeting time intervals where intervals[i] = [start, end]: (252) determine if a person could attend all meetings — i.e. no two overlap. (253) Return the minimum number of conference rooms required to hold all the meetings. (End is treated as exclusive: [5,10] and [10,15] do not conflict.)',
+    intuition: [
+      'Sort the meetings by start time. Once sorted, you only ever have to think about how a meeting relates to the ones already in progress.',
+      '252 — Can attend all? After sorting, an overlap can only occur between back-to-back neighbours. If any meeting starts before its predecessor ends, the answer is false.',
+      '253 — Minimum rooms? Keep a min-heap of the END times of meetings currently using a room. The smallest end is the soonest a room frees up.',
+      'For each meeting, if the soonest-ending room is already free (its end ≤ this start), reuse it (pop); then add this meeting’s end. The number of rooms is the most that are ever in the heap at once.',
+    ],
+    steps: [
+      'Sort the intervals by start time.',
+      '252: scan neighbours — if intervals[i].start < intervals[i-1].end, return false; else return true.',
+      '253: keep a min-heap of end times; for each meeting, pop if heap.peek() ≤ start, then push the end.',
+      '253: the heap size never shrinks below its peak — that peak is the answer.',
+    ],
+    complexity: {
+      time: 'O(n log n) — dominated by the sort (the heap operations are O(n log n) total).',
+      space: 'O(n) for the heap (252 needs only O(1) beyond the sort).',
+    },
+    Visualizer: MeetingRoomsViz,
+    code: MEETING_253,
+    solutions: [
+      {
+        name: '252 · Can attend all? — sort + neighbour check',
+        blurb:
+          'Sort by start, then a single pass: if any meeting begins before the previous one ends, they overlap. O(n log n) time, O(1) extra space.',
+        code: MEETING_252,
+      },
+      {
+        name: '253 · Minimum rooms — sort + min-heap',
+        blurb:
+          'Sort by start and keep a min-heap of end times. Reuse the soonest-freeing room when possible; the peak heap size is the rooms needed. This is the version animated above.',
+        code: MEETING_253,
+      },
+    ],
   },
 
   {
