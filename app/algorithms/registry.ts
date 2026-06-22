@@ -15,6 +15,7 @@ import ProductExceptSelfViz from './algos/product-except-self/ProductExceptSelfV
 import LongestSubstringViz from './algos/longest-substring/LongestSubstringViz'
 import MeetingRoomsViz from './algos/meeting-rooms/MeetingRoomsViz'
 import LRUCacheViz from './algos/lru-cache/LRUCacheViz'
+import TrieViz from './algos/trie/TrieViz'
 
 // Lowest Common Ancestor has two notable solutions, shared below.
 const LCA_RECURSIVE: Record<Lang, string> = {
@@ -1115,6 +1116,168 @@ public:
 `,
 }
 
+// Implement Trie (Prefix Tree): a tree of character branches with end-of-word flags.
+const TRIE_CODE: Record<Lang, string> = {
+  py: `class Trie:
+    def __init__(self):
+        self.root = {}
+
+    def insert(self, word):
+        node = self.root
+        for c in word:
+            node = node.setdefault(c, {})   # create branch if missing
+        node['$'] = True                    # mark end of word
+
+    def search(self, word):
+        node = self.root
+        for c in word:
+            if c not in node:
+                return False
+            node = node[c]
+        return '$' in node
+
+    def startsWith(self, prefix):
+        node = self.root
+        for c in prefix:
+            if c not in node:
+                return False
+            node = node[c]
+        return True
+`,
+  js: `class Trie {
+  constructor() {
+    this.root = {};
+  }
+  insert(word) {
+    let node = this.root;
+    for (const c of word) {
+      if (!node[c]) node[c] = {};   // create branch if missing
+      node = node[c];
+    }
+    node.end = true;                // mark end of word
+  }
+  search(word) {
+    let node = this.root;
+    for (const c of word) {
+      if (!node[c]) return false;
+      node = node[c];
+    }
+    return node.end === true;
+  }
+  startsWith(prefix) {
+    let node = this.root;
+    for (const c of prefix) {
+      if (!node[c]) return false;
+      node = node[c];
+    }
+    return true;
+  }
+}
+`,
+  ts: `class TrieNode {
+  children: Record<string, TrieNode> = {};
+  end = false;
+}
+
+class Trie {
+  private root = new TrieNode();
+  insert(word: string): void {
+    let node = this.root;
+    for (const c of word) {
+      if (!node.children[c]) node.children[c] = new TrieNode();
+      node = node.children[c];
+    }
+    node.end = true;
+  }
+  search(word: string): boolean {
+    let node = this.root;
+    for (const c of word) {
+      if (!node.children[c]) return false;
+      node = node.children[c];
+    }
+    return node.end;
+  }
+  startsWith(prefix: string): boolean {
+    let node = this.root;
+    for (const c of prefix) {
+      if (!node.children[c]) return false;
+      node = node.children[c];
+    }
+    return true;
+  }
+}
+`,
+  java: `class Trie {
+    private static class Node {
+        Node[] children = new Node[26];
+        boolean end;
+    }
+    private final Node root = new Node();
+
+    public void insert(String word) {
+        Node node = root;
+        for (char c : word.toCharArray()) {
+            int i = c - 'a';
+            if (node.children[i] == null) node.children[i] = new Node();
+            node = node.children[i];
+        }
+        node.end = true;
+    }
+    public boolean search(String word) {
+        Node node = walk(word);
+        return node != null && node.end;
+    }
+    public boolean startsWith(String prefix) {
+        return walk(prefix) != null;
+    }
+    private Node walk(String s) {
+        Node node = root;
+        for (char c : s.toCharArray()) {
+            int i = c - 'a';
+            if (node.children[i] == null) return null;
+            node = node.children[i];
+        }
+        return node;
+    }
+}
+`,
+  cpp: `class Trie {
+    struct Node {
+        Node* children[26] = {};
+        bool end = false;
+    };
+    Node* root;
+    Node* walk(const string& s) {
+        Node* node = root;
+        for (char c : s) {
+            int i = c - 'a';
+            if (!node->children[i]) return nullptr;
+            node = node->children[i];
+        }
+        return node;
+    }
+public:
+    Trie() { root = new Node(); }
+    void insert(string word) {
+        Node* node = root;
+        for (char c : word) {
+            int i = c - 'a';
+            if (!node->children[i]) node->children[i] = new Node();
+            node = node->children[i];
+        }
+        node->end = true;
+    }
+    bool search(string word) {
+        Node* node = walk(word);
+        return node && node->end;
+    }
+    bool startsWith(string prefix) {
+        return walk(prefix) != nullptr;
+    }
+};
+`,
+}
+
 export const CATEGORIES: Category[] = [
   {
     slug: 'union-find',
@@ -1160,6 +1323,11 @@ export const CATEGORIES: Category[] = [
     slug: 'linked-list',
     name: 'Linked List',
     blurb: 'Pointer juggling, ordered structures, and O(1) reordering tricks.',
+  },
+  {
+    slug: 'tries',
+    name: 'Tries',
+    blurb: 'Prefix trees for fast word and prefix lookups.',
   },
   {
     slug: 'dynamic-programming',
@@ -2121,6 +2289,35 @@ public:
         code: LRU_DLL,
       },
     ],
+  },
+
+  {
+    slug: 'trie',
+    category: 'tries',
+    title: 'Implement Trie (Prefix Tree)',
+    difficulty: 'Medium',
+    blurb: 'A tree of characters for O(L) word and prefix lookups.',
+    tags: ['LeetCode 208', 'Trie', 'Design'],
+    statement:
+      'Implement a trie (prefix tree) supporting three operations: insert(word) adds a word; search(word) returns true only if the exact word was inserted; startsWith(prefix) returns true if any inserted word begins with the prefix.',
+    intuition: [
+      'A trie is a tree where every edge is labelled with a character, so a path from the root spells out a prefix. Words that share a prefix share the same branch — no duplication.',
+      'insert walks the word character by character, creating a child node whenever the branch does not exist yet, then flags the final node as the end of a word.',
+      'search walks the same way; if any character has no branch it fails, and at the end it checks the end-of-word flag (a prefix alone is not a match).',
+      'startsWith is search without the final flag check: reaching the end of the prefix is enough.',
+    ],
+    steps: [
+      'Keep a root node whose children are keyed by character; each node has an “end of word” flag.',
+      'insert: for each char, follow or create the child; mark the last node as a word end.',
+      'search: for each char, fail if the child is missing; at the end return the end flag.',
+      'startsWith: same walk, but return true as soon as the whole prefix is consumed.',
+    ],
+    complexity: {
+      time: 'O(L) per operation, where L is the length of the word or prefix.',
+      space: 'O(total characters inserted) across all words.',
+    },
+    Visualizer: TrieViz,
+    code: TRIE_CODE,
   },
 
   {
