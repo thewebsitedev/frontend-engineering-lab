@@ -8,12 +8,13 @@ type AlgoShellProps = {
   crumbs: Crumb[]
   kicker?: string
   title: string
+  titleAside?: ReactNode
   children: ReactNode
 }
 
 // Shared chrome for every page in the Algorithms section. Server component:
 // no interactivity here, just layout + fonts + breadcrumb.
-export default function AlgoShell({ crumbs, kicker, title, children }: AlgoShellProps) {
+export default function AlgoShell({ crumbs, kicker, title, titleAside, children }: AlgoShellProps) {
   return (
     <div
       style={{
@@ -70,17 +71,29 @@ export default function AlgoShell({ crumbs, kicker, title, children }: AlgoShell
               {kicker}
             </div>
           )}
-          <h1
+          <div
             style={{
-              fontFamily: MONO,
-              fontWeight: 700,
-              fontSize: 30,
+              display: 'flex',
+              alignItems: 'flex-end',
+              justifyContent: 'space-between',
+              gap: 16,
+              flexWrap: 'wrap',
               margin: kicker ? '4px 0 0' : '14px 0 0',
-              letterSpacing: -1,
             }}
           >
-            {title}
-          </h1>
+            <h1
+              style={{
+                fontFamily: MONO,
+                fontWeight: 700,
+                fontSize: 30,
+                margin: 0,
+                letterSpacing: -1,
+              }}
+            >
+              {title}
+            </h1>
+            {titleAside}
+          </div>
         </header>
 
         {children}
