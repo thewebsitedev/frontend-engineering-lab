@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import AlgoShell from './AlgoShell'
-import { CATEGORIES, getAlgorithmsByCategory } from './registry'
+import { ALGORITHMS, CATEGORIES, getAlgorithmsByCategory } from './registry'
 import { C, MONO } from './theme'
 
 export const metadata: Metadata = {
@@ -15,6 +15,14 @@ export default function AlgorithmsLanding() {
       crumbs={[{ label: 'lab', href: '/' }, { label: 'algorithms' }]}
       kicker="learn by tracing"
       title="Algorithms"
+      titleAside={
+        <span style={{ fontFamily: MONO, fontSize: 13, color: C.slate, paddingBottom: 4 }}>
+          <b style={{ color: C.signal, fontSize: 15 }}>{ALGORITHMS.length}</b>{' '}
+          {ALGORITHMS.length === 1 ? 'algorithm' : 'algorithms'} ·{' '}
+          <b style={{ color: C.ink }}>{CATEGORIES.length}</b>{' '}
+          {CATEGORIES.length === 1 ? 'category' : 'categories'}
+        </span>
+      }
     >
       <p style={{ fontSize: 16, lineHeight: 1.6, maxWidth: 620, marginBottom: 28 }}>
         Pick a category to browse problems. Each problem comes with a worked intuition, a
