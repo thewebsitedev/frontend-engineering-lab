@@ -2948,3 +2948,35 @@ export function getAlgorithmsByCategory(categorySlug: string): Algorithm[] {
 export function getAlgorithm(categorySlug: string, algoSlug: string): Algorithm | undefined {
   return ALGORITHMS.find((a) => a.category === categorySlug && a.slug === algoSlug)
 }
+
+// When each algorithm was first published (ISO, from git history). Used to surface
+// the newest ones on the home page. Add a line when you add an algorithm; any slug
+// missing here simply sorts as oldest.
+const ADDED: Record<string, string> = {
+  'redundant-connection': '2026-06-20T20:20:33Z',
+  'climbing-stairs': '2026-06-20T20:20:34Z',
+  'two-sum': '2026-06-21T13:54:40Z',
+  'group-anagrams': '2026-06-21T14:03:09Z',
+  'valid-parentheses': '2026-06-21T14:16:24Z',
+  'number-of-islands': '2026-06-21T14:38:29Z',
+  'binary-tree-level-order': '2026-06-21T14:50:36Z',
+  'lowest-common-ancestor': '2026-06-21T15:25:32Z',
+  'top-k-frequent': '2026-06-21T16:34:27Z',
+  'merge-intervals': '2026-06-21T16:50:02Z',
+  'course-schedule': '2026-06-21T21:52:42Z',
+  'clone-graph': '2026-06-21T22:32:34Z',
+  'k-closest-points': '2026-06-21T23:35:50Z',
+  'product-except-self': '2026-06-21T23:48:22Z',
+  'longest-substring': '2026-06-22T00:00:32Z',
+  'meeting-rooms': '2026-06-22T00:15:16Z',
+  'lru-cache': '2026-06-22T00:42:42Z',
+  trie: '2026-06-22T00:50:00Z',
+  'word-search': '2026-06-22T00:57:40Z',
+}
+
+// Newest algorithms first (by publish date), for the home page.
+export function getLatestAlgorithms(n = 3): Algorithm[] {
+  return [...ALGORITHMS]
+    .sort((a, b) => (ADDED[b.slug] ?? '').localeCompare(ADDED[a.slug] ?? ''))
+    .slice(0, n)
+}
