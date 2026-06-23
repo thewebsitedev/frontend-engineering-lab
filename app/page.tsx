@@ -1,5 +1,6 @@
 import Link from 'next/link'
-import { C, MONO, SANS } from './algorithms/theme'
+import { C, MONO, SANS, DIFFICULTY_COLOR } from './algorithms/theme'
+import { ALGORITHMS, getCategory, getLatestAlgorithms } from './algorithms/registry'
 
 const experiments = [
   {
@@ -37,6 +38,7 @@ const EDGES: [number, number, boolean][] = [
 ]
 
 export default function Home() {
+  const latest = getLatestAlgorithms(3)
   return (
     <div
       style={{
@@ -184,68 +186,73 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Featured: Algorithms */}
-        <SectionLabel>Featured</SectionLabel>
-        <Link href="/algorithms">
-          <div
-            className="feature card"
-            style={{
-              border: `2px solid ${C.ink}`,
-              borderRadius: 10,
-              background: '#FBF9F3',
-              padding: 28,
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: 20,
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <div style={{ maxWidth: 560 }}>
+        {/* Latest algorithms */}
+        <div
+          style={{
+            fontFamily: MONO,
+            fontSize: 12,
+            letterSpacing: 1.5,
+            textTransform: 'uppercase',
+            color: C.slate,
+            margin: '52px 0 14px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+          }}
+        >
+          Latest algorithms
+          <span style={{ flex: 1, height: 1, background: C.wire }} />
+          <Link href="/algorithms" style={{ color: C.trace, textTransform: 'none', letterSpacing: 0 }}>
+            all {ALGORITHMS.length} →
+          </Link>
+        </div>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+            gap: 16,
+          }}
+        >
+          {latest.map((a) => (
+            <Link key={a.slug} href={`/algorithms/${a.category}/${a.slug}`}>
               <div
+                className="card"
                 style={{
-                  fontFamily: MONO,
-                  fontSize: 11,
-                  letterSpacing: 1,
-                  textTransform: 'uppercase',
-                  color: C.signal,
-                  marginBottom: 8,
+                  border: `1.5px solid ${C.ink}`,
+                  borderRadius: 10,
+                  background: '#FBF9F3',
+                  padding: 22,
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 10,
                 }}
               >
-                4 problems · 5 languages
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                  <span style={{ fontFamily: MONO, fontSize: 11, letterSpacing: 1, textTransform: 'uppercase', color: C.trace }}>
+                    {getCategory(a.category)?.name ?? a.category}
+                  </span>
+                  <span
+                    style={{
+                      fontFamily: MONO,
+                      fontSize: 10.5,
+                      fontWeight: 700,
+                      letterSpacing: 0.5,
+                      textTransform: 'uppercase',
+                      color: DIFFICULTY_COLOR[a.difficulty],
+                    }}
+                  >
+                    {a.difficulty}
+                  </span>
+                </div>
+                <div style={{ fontFamily: MONO, fontWeight: 700, fontSize: 18, letterSpacing: -0.5, lineHeight: 1.2 }}>{a.title}</div>
+                <p style={{ fontSize: 14, lineHeight: 1.55, margin: 0, opacity: 0.8 }}>{a.blurb}</p>
+                <div style={{ flex: 1 }} />
+                <div style={{ fontFamily: MONO, fontSize: 13, color: C.signal }}>open →</div>
               </div>
-              <div
-                style={{
-                  fontFamily: MONO,
-                  fontWeight: 700,
-                  fontSize: 26,
-                  letterSpacing: -1,
-                  marginBottom: 8,
-                }}
-              >
-                Algorithms, traced step by step
-              </div>
-              <p style={{ fontSize: 15.5, lineHeight: 1.6, margin: 0, opacity: 0.85 }}>
-                Worked intuition, a step-by-step walkthrough, and reference code in JavaScript,
-                TypeScript, Python, Java, and C++ — with an interactive trace for Union–Find.
-              </p>
-            </div>
-            <div
-              className="go"
-              style={{
-                fontFamily: MONO,
-                fontWeight: 700,
-                fontSize: 15,
-                color: C.signal,
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 8,
-              }}
-            >
-              open →
-            </div>
-          </div>
-        </Link>
+            </Link>
+          ))}
+        </div>
 
         {/* Experiments grid */}
         <SectionLabel>Experiments</SectionLabel>
