@@ -74,7 +74,7 @@ export default function Home() {
           <Link href="/algorithms" style={{ color: C.trace }}>
             algorithms
           </Link>
-          <Link href="/experiments/graph-visualizer" style={{ color: C.trace }}>
+          <Link href="/experiments" style={{ color: C.trace }}>
             experiments
           </Link>
         </nav>
@@ -138,7 +138,7 @@ export default function Home() {
               <Link href="/algorithms" style={cta(C.ink, C.paper)}>
                 Explore algorithms →
               </Link>
-              <Link href="/experiments/graph-visualizer" style={cta(C.paper, C.ink)}>
+              <Link href="/experiments" style={cta(C.paper, C.ink)}>
                 See experiments
               </Link>
             </div>
