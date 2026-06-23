@@ -123,7 +123,7 @@ export default function PageWrapper({children}: PageWrapperProps) {
               ))}
             </div>
             <p className="mt-8 text-sm/6 text-gray-400 md:order-1 md:mt-0">
-              &copy; 2026 Frontend Experiments. All rights reserved.
+              &copy; 2026 Frontend Experiments by Gautam Thapar. All rights reserved.
             </p>
           </div>
         </div>
