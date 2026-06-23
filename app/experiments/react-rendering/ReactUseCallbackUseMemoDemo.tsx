@@ -1,58 +1,75 @@
-"use client"
+'use client'
 
-import { useCallback, useMemo, useState, memo } from "react"
+import { memo, useCallback, useMemo, useState } from 'react'
+import { CodeBlock, Callout, DemoCard, DemoButton, RenderBadge, Stat, H2, Prose, useRenderCount } from '../parts'
 
-type ChildProps = {
-  onClick: () => void
-  config: { theme: string }
+const CODE = `function Child({ onClick, config }) {
+  return <p>Theme: {config.theme}</p>;
 }
 
-const Child = memo(function Child({ onClick, config }: ChildProps) {
-  console.log("Child render")
+const MemoizedChild = memo(Child);
+
+function App() {
+  const [count, setCount] = useState(0);
+
+  const handleClick = useCallback(() => setCount(c => c + 1), []);
+
+  // Object literals are a new reference every render too — useMemo freezes it.
+  const config = useMemo(() => ({ theme: "paper" }), []);
 
   return (
-    <div>
-      <button onClick={onClick}>Child button</button>
-      <p>Theme: {config.theme}</p>
-    </div>
+    <>
+      <p>Count: {count}</p>
+      <MemoizedChild onClick={handleClick} config={config} />
+    </>
+  );
+}`
+
+function ChildInner({ onClick, config }: { onClick: () => void; config: { theme: string } }) {
+  const renders = useRenderCount()
+  return (
+    <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
+      <RenderBadge label="Child" count={renders} />
+      <span style={{ fontFamily: 'monospace', fontSize: 12.5 }} onClick={onClick}>
+        theme: {config.theme}
+      </span>
+    </span>
   )
-})
+}
+const MemoizedChild = memo(ChildInner)
 
 export default function ReactUseCallbackUseMemoDemo() {
+  const appRenders = useRenderCount()
   const [count, setCount] = useState(0)
-
-  console.log("App render")
-
-  const handleClick = useCallback(() => {
-    setCount((c) => c + 1)
-  }, [])
-
-  const config = useMemo(() => {
-    return { theme: "dark" }
-  }, [])
+  const handleClick = useCallback(() => setCount((c) => c + 1), [])
+  const config = useMemo(() => ({ theme: 'paper' }), [])
 
   return (
-    <div className="mt-2 text-lg text-balance text-white sm:text-md">
-      <p className="text-lg font-bold mt-10">Experiment 5: useCallback and useMemo Hooks</p>
-      <button onClick={handleClick}
-          className="mt-5 rounded-md bg-indigo-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-indigo-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 mb-5 "
-        >
-          Increment
-        </button>
+    <div style={{ marginBottom: 12 }}>
+      <H2>5 · useMemo stabilizes an object prop</H2>
+      <Prose>
+        The same trap applies to objects and arrays: an inline <code>{'{ theme: "paper" }'}</code> is
+        a new reference every render. <code>useMemo</code> caches the object so its identity is
+        stable, keeping the memoized child quiet even though we pass it both a function and an object.
+      </Prose>
 
-      <p>Count: {count}</p>
+      <DemoCard>
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center', marginBottom: 14 }}>
+          <RenderBadge label="App" count={appRenders} />
+          <MemoizedChild onClick={handleClick} config={config} />
+          <div style={{ flex: 1 }} />
+          <Stat label="count" value={count} />
+        </div>
+        <DemoButton onClick={() => setCount((c) => c + 1)}>Increment</DemoButton>
+      </DemoCard>
 
-      <Child onClick={handleClick} config={config} />
+      <Callout tone="go">
+        Child stays at 1. Full recipe for a quiet memoized child: <strong>memo</strong> the child,{' '}
+        <strong>useCallback</strong> its function props, and <strong>useMemo</strong> its object/array
+        props — every reference it receives must be stable.
+      </Callout>
 
-      <div className="border-l-4 border-yellow-500 bg-yellow-500/10 p-4 mt-5">
-        <p className="text-sm text-yellow-300">
-          Check console to see only parent re-render on increment.<br /><br />
-          App render<br /><br />
-          React.memo → prevents re-render<br />
-          useCallback → stabilizes function props<br />
-          useMemo → Stabilizes object/value references
-        </p>
-      </div>
+      <CodeBlock code={CODE} />
     </div>
   )
 }

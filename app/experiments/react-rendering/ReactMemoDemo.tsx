@@ -1,42 +1,61 @@
-"use client"
+'use client'
 
-import React from "react";
-import { useState } from "react"
+import React, { useState } from 'react'
+import { CodeBlock, Callout, DemoCard, DemoButton, RenderBadge, Stat, H2, Prose, useRenderCount } from '../parts'
 
-function Child() {
-  console.log("Child render")
-  return <div>Child Component</div>
+const CODE = `function Child() {
+  return <div>Child Component</div>;
 }
 
+// React.memo skips the re-render when props are unchanged.
 const MemoizedChild = React.memo(Child);
 
+function App() {
+  const [count, setCount] = useState(0);
+  return (
+    <>
+      <button onClick={() => setCount(count + 1)}>Increment</button>
+      <p>Count: {count}</p>
+      <MemoizedChild />
+    </>
+  );
+}`
+
+function ChildInner() {
+  const renders = useRenderCount()
+  return <RenderBadge label="Child" count={renders} />
+}
+const MemoizedChild = React.memo(ChildInner)
+
 export default function ReactMemoDemo() {
+  const appRenders = useRenderCount()
   const [count, setCount] = useState(0)
 
-  console.log("App render")
-
   return (
-    <div className="mt-2 text-lg text-balance text-white sm:text-md">
-      <p className="text-lg font-bold mt-10">Experiment 2: Memoization</p>
-      <div className="mt-5 flex items-center gap-x-6">
-        <button onClick={() => setCount(count + 1)}
-          className="rounded-md bg-indigo-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-indigo-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 mb-5 "
-        >
-          Increment
-        </button>
-      </div>
+    <div style={{ marginBottom: 36 }}>
+      <H2>2 · React.memo</H2>
+      <Prose>
+        Wrapping a component in <code>React.memo</code> tells React: “only re-render this if its
+        props change.” This child takes no props, so after the first render it never needs to run
+        again. Click increment — App climbs, Child stays put.
+      </Prose>
 
-      <p>Count: {count}</p>
+      <DemoCard>
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center', marginBottom: 14 }}>
+          <RenderBadge label="App" count={appRenders} />
+          <MemoizedChild />
+          <div style={{ flex: 1 }} />
+          <Stat label="count" value={count} />
+        </div>
+        <DemoButton onClick={() => setCount(count + 1)}>Increment</DemoButton>
+      </DemoCard>
 
-      <MemoizedChild />
+      <Callout tone="go">
+        Child stays at 1 render no matter how many times you click. React.memo did a cheap props
+        comparison, saw nothing changed, and reused the previous output.
+      </Callout>
 
-      <div className="border-l-4 border-yellow-500 bg-yellow-500/10 p-4 mt-5">
-        <p className="text-sm text-yellow-300">
-          Check console to see that only parent re-render on increment because of Memoization.<br /><br />
-          App render
-        </p>
-      </div>
-
+      <CodeBlock code={CODE} />
     </div>
   )
 }
