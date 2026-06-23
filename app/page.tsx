@@ -68,7 +68,7 @@ export default function Home() {
         }}
       >
         <span style={{ fontFamily: MONO, fontWeight: 700, fontSize: 13, letterSpacing: 1 }}>
-          FE·LAB
+          LAB by Gautam Thapar
         </span>
         <nav style={{ display: 'flex', gap: 18, fontFamily: MONO, fontSize: 13 }}>
           <Link href="/algorithms" style={{ color: C.trace }}>
@@ -308,7 +308,7 @@ export default function Home() {
             color: C.slate,
           }}
         >
-          <span>© 2026 Frontend Engineering Lab</span>
+          <span>© 2026 Lab by Gautam Thapar</span>
           <span>built with Next.js · React</span>
         </footer>
       </div>
