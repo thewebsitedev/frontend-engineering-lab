@@ -17,6 +17,10 @@ import MeetingRoomsViz from './algos/meeting-rooms/MeetingRoomsViz'
 import LRUCacheViz from './algos/lru-cache/LRUCacheViz'
 import TrieViz from './algos/trie/TrieViz'
 import WordSearchViz from './algos/word-search/WordSearchViz'
+import ContainerWithMostWaterViz from './algos/container-with-most-water/ContainerWithMostWaterViz'
+import ThreeSumViz from './algos/three-sum/ThreeSumViz'
+import TrappingRainWaterViz from './algos/trapping-rain-water/TrappingRainWaterViz'
+import CharacterReplacementViz from './algos/character-replacement/CharacterReplacementViz'
 
 // Lowest Common Ancestor has two notable solutions, shared below.
 const LCA_RECURSIVE: Record<Lang, string> = {
@@ -1393,6 +1397,362 @@ public:
 `,
 }
 
+// Container With Most Water: two pointers from the ends, move the shorter wall in.
+const CONTAINER_WATER: Record<Lang, string> = {
+  py: `def maxArea(height):
+    left, right = 0, len(height) - 1
+    best = 0
+    while left < right:
+        h = min(height[left], height[right])
+        best = max(best, h * (right - left))
+        if height[left] < height[right]:
+            left += 1
+        else:
+            right -= 1
+    return best
+`,
+  js: `function maxArea(height) {
+  let left = 0, right = height.length - 1;
+  let best = 0;
+  while (left < right) {
+    const h = Math.min(height[left], height[right]);
+    best = Math.max(best, h * (right - left));
+    if (height[left] < height[right]) left++;
+    else right--;
+  }
+  return best;
+}
+`,
+  ts: `function maxArea(height: number[]): number {
+  let left = 0, right = height.length - 1;
+  let best = 0;
+  while (left < right) {
+    const h = Math.min(height[left], height[right]);
+    best = Math.max(best, h * (right - left));
+    if (height[left] < height[right]) left++;
+    else right--;
+  }
+  return best;
+}
+`,
+  java: `class Solution {
+    public int maxArea(int[] height) {
+        int left = 0, right = height.length - 1, best = 0;
+        while (left < right) {
+            int h = Math.min(height[left], height[right]);
+            best = Math.max(best, h * (right - left));
+            if (height[left] < height[right]) left++;
+            else right--;
+        }
+        return best;
+    }
+}
+`,
+  cpp: `class Solution {
+public:
+    int maxArea(vector<int>& height) {
+        int left = 0, right = height.size() - 1, best = 0;
+        while (left < right) {
+            int h = min(height[left], height[right]);
+            best = max(best, h * (right - left));
+            if (height[left] < height[right]) left++;
+            else right--;
+        }
+        return best;
+    }
+};
+`,
+}
+
+// 3Sum: sort, then fix an anchor and two-pointer the rest; skip duplicates.
+const THREE_SUM: Record<Lang, string> = {
+  py: `def threeSum(nums):
+    nums.sort()
+    res = []
+    for i in range(len(nums) - 2):
+        if i > 0 and nums[i] == nums[i - 1]:
+            continue                          # skip duplicate anchor
+        left, right = i + 1, len(nums) - 1
+        while left < right:
+            total = nums[i] + nums[left] + nums[right]
+            if total < 0:
+                left += 1
+            elif total > 0:
+                right -= 1
+            else:
+                res.append([nums[i], nums[left], nums[right]])
+                left += 1
+                right -= 1
+                while left < right and nums[left] == nums[left - 1]:
+                    left += 1
+                while left < right and nums[right] == nums[right + 1]:
+                    right -= 1
+    return res
+`,
+  js: `function threeSum(nums) {
+  nums.sort((a, b) => a - b);
+  const res = [];
+  for (let i = 0; i < nums.length - 2; i++) {
+    if (i > 0 && nums[i] === nums[i - 1]) continue;   // skip duplicate anchor
+    let left = i + 1, right = nums.length - 1;
+    while (left < right) {
+      const sum = nums[i] + nums[left] + nums[right];
+      if (sum < 0) left++;
+      else if (sum > 0) right--;
+      else {
+        res.push([nums[i], nums[left], nums[right]]);
+        left++; right--;
+        while (left < right && nums[left] === nums[left - 1]) left++;
+        while (left < right && nums[right] === nums[right + 1]) right--;
+      }
+    }
+  }
+  return res;
+}
+`,
+  ts: `function threeSum(nums: number[]): number[][] {
+  nums.sort((a, b) => a - b);
+  const res: number[][] = [];
+  for (let i = 0; i < nums.length - 2; i++) {
+    if (i > 0 && nums[i] === nums[i - 1]) continue;   // skip duplicate anchor
+    let left = i + 1, right = nums.length - 1;
+    while (left < right) {
+      const sum = nums[i] + nums[left] + nums[right];
+      if (sum < 0) left++;
+      else if (sum > 0) right--;
+      else {
+        res.push([nums[i], nums[left], nums[right]]);
+        left++; right--;
+        while (left < right && nums[left] === nums[left - 1]) left++;
+        while (left < right && nums[right] === nums[right + 1]) right--;
+      }
+    }
+  }
+  return res;
+}
+`,
+  java: `class Solution {
+    public List<List<Integer>> threeSum(int[] nums) {
+        Arrays.sort(nums);
+        List<List<Integer>> res = new ArrayList<>();
+        for (int i = 0; i < nums.length - 2; i++) {
+            if (i > 0 && nums[i] == nums[i - 1]) continue;   // skip duplicate anchor
+            int left = i + 1, right = nums.length - 1;
+            while (left < right) {
+                int sum = nums[i] + nums[left] + nums[right];
+                if (sum < 0) left++;
+                else if (sum > 0) right--;
+                else {
+                    res.add(Arrays.asList(nums[i], nums[left], nums[right]));
+                    left++; right--;
+                    while (left < right && nums[left] == nums[left - 1]) left++;
+                    while (left < right && nums[right] == nums[right + 1]) right--;
+                }
+            }
+        }
+        return res;
+    }
+}
+`,
+  cpp: `class Solution {
+public:
+    vector<vector<int>> threeSum(vector<int>& nums) {
+        sort(nums.begin(), nums.end());
+        vector<vector<int>> res;
+        for (int i = 0; i < (int)nums.size() - 2; i++) {
+            if (i > 0 && nums[i] == nums[i - 1]) continue;   // skip duplicate anchor
+            int left = i + 1, right = nums.size() - 1;
+            while (left < right) {
+                int sum = nums[i] + nums[left] + nums[right];
+                if (sum < 0) left++;
+                else if (sum > 0) right--;
+                else {
+                    res.push_back({nums[i], nums[left], nums[right]});
+                    left++; right--;
+                    while (left < right && nums[left] == nums[left - 1]) left++;
+                    while (left < right && nums[right] == nums[right + 1]) right--;
+                }
+            }
+        }
+        return res;
+    }
+};
+`,
+}
+
+// Trapping Rain Water: two pointers, resolve the shorter side against its running max.
+const TRAPPING_WATER: Record<Lang, string> = {
+  py: `def trap(height):
+    left, right = 0, len(height) - 1
+    left_max = right_max = 0
+    water = 0
+    while left < right:
+        if height[left] < height[right]:
+            left_max = max(left_max, height[left])
+            water += left_max - height[left]
+            left += 1
+        else:
+            right_max = max(right_max, height[right])
+            water += right_max - height[right]
+            right -= 1
+    return water
+`,
+  js: `function trap(height) {
+  let left = 0, right = height.length - 1;
+  let leftMax = 0, rightMax = 0, water = 0;
+  while (left < right) {
+    if (height[left] < height[right]) {
+      leftMax = Math.max(leftMax, height[left]);
+      water += leftMax - height[left];
+      left++;
+    } else {
+      rightMax = Math.max(rightMax, height[right]);
+      water += rightMax - height[right];
+      right--;
+    }
+  }
+  return water;
+}
+`,
+  ts: `function trap(height: number[]): number {
+  let left = 0, right = height.length - 1;
+  let leftMax = 0, rightMax = 0, water = 0;
+  while (left < right) {
+    if (height[left] < height[right]) {
+      leftMax = Math.max(leftMax, height[left]);
+      water += leftMax - height[left];
+      left++;
+    } else {
+      rightMax = Math.max(rightMax, height[right]);
+      water += rightMax - height[right];
+      right--;
+    }
+  }
+  return water;
+}
+`,
+  java: `class Solution {
+    public int trap(int[] height) {
+        int left = 0, right = height.length - 1;
+        int leftMax = 0, rightMax = 0, water = 0;
+        while (left < right) {
+            if (height[left] < height[right]) {
+                leftMax = Math.max(leftMax, height[left]);
+                water += leftMax - height[left];
+                left++;
+            } else {
+                rightMax = Math.max(rightMax, height[right]);
+                water += rightMax - height[right];
+                right--;
+            }
+        }
+        return water;
+    }
+}
+`,
+  cpp: `class Solution {
+public:
+    int trap(vector<int>& height) {
+        int left = 0, right = height.size() - 1;
+        int leftMax = 0, rightMax = 0, water = 0;
+        while (left < right) {
+            if (height[left] < height[right]) {
+                leftMax = max(leftMax, height[left]);
+                water += leftMax - height[left];
+                left++;
+            } else {
+                rightMax = max(rightMax, height[right]);
+                water += rightMax - height[right];
+                right--;
+            }
+        }
+        return water;
+    }
+};
+`,
+}
+
+// Longest Repeating Character Replacement: sliding window, valid when len - maxFreq <= k.
+const CHARACTER_REPLACEMENT: Record<Lang, string> = {
+  py: `def characterReplacement(s, k):
+    count = {}
+    left = max_freq = best = 0
+    for right, c in enumerate(s):
+        count[c] = count.get(c, 0) + 1
+        max_freq = max(max_freq, count[c])
+        while (right - left + 1) - max_freq > k:
+            count[s[left]] -= 1
+            left += 1
+        best = max(best, right - left + 1)
+    return best
+`,
+  js: `function characterReplacement(s, k) {
+  const count = {};
+  let left = 0, maxFreq = 0, best = 0;
+  for (let right = 0; right < s.length; right++) {
+    const c = s[right];
+    count[c] = (count[c] || 0) + 1;
+    maxFreq = Math.max(maxFreq, count[c]);
+    while ((right - left + 1) - maxFreq > k) {
+      count[s[left]]--;
+      left++;
+    }
+    best = Math.max(best, right - left + 1);
+  }
+  return best;
+}
+`,
+  ts: `function characterReplacement(s: string, k: number): number {
+  const count: Record<string, number> = {};
+  let left = 0, maxFreq = 0, best = 0;
+  for (let right = 0; right < s.length; right++) {
+    const c = s[right];
+    count[c] = (count[c] || 0) + 1;
+    maxFreq = Math.max(maxFreq, count[c]);
+    while ((right - left + 1) - maxFreq > k) {
+      count[s[left]]--;
+      left++;
+    }
+    best = Math.max(best, right - left + 1);
+  }
+  return best;
+}
+`,
+  java: `class Solution {
+    public int characterReplacement(String s, int k) {
+        int[] count = new int[26];
+        int left = 0, maxFreq = 0, best = 0;
+        for (int right = 0; right < s.length(); right++) {
+            maxFreq = Math.max(maxFreq, ++count[s.charAt(right) - 'A']);
+            while ((right - left + 1) - maxFreq > k) {
+                count[s.charAt(left) - 'A']--;
+                left++;
+            }
+            best = Math.max(best, right - left + 1);
+        }
+        return best;
+    }
+}
+`,
+  cpp: `class Solution {
+public:
+    int characterReplacement(string s, int k) {
+        vector<int> count(26, 0);
+        int left = 0, maxFreq = 0, best = 0;
+        for (int right = 0; right < (int)s.size(); right++) {
+            maxFreq = max(maxFreq, ++count[s[right] - 'A']);
+            while ((right - left + 1) - maxFreq > k) {
+                count[s[left] - 'A']--;
+                left++;
+            }
+            best = max(best, right - left + 1);
+        }
+        return best;
+    }
+};
+`,
+}
+
 export const CATEGORIES: Category[] = [
   {
     slug: 'union-find',
@@ -1403,6 +1763,11 @@ export const CATEGORIES: Category[] = [
     slug: 'arrays-hashing',
     name: 'Arrays & Hashing',
     blurb: 'Lookups, frequency maps, and the bread-and-butter of interviews.',
+  },
+  {
+    slug: 'two-pointers',
+    name: 'Two Pointers',
+    blurb: 'Walk a pair of indices inward (or together) to avoid nested loops.',
   },
   {
     slug: 'stack',
@@ -1999,6 +2364,111 @@ public:
         code: PRODUCT_TWO_ARRAYS,
       },
     ],
+  },
+
+  {
+    slug: 'container-with-most-water',
+    category: 'two-pointers',
+    title: 'Container With Most Water',
+    difficulty: 'Medium',
+    blurb: 'Pick two walls that trap the most water — one linear two-pointer pass.',
+    tags: ['LeetCode 11', 'Two Pointers', 'Greedy'],
+    statement:
+      'You are given an array height where height[i] is the height of a vertical line at position i. Pick two lines that, together with the x-axis, form a container holding the most water. Return that maximum area. The area between lines i and j is min(height[i], height[j]) × (j − i).',
+    intuition: [
+      'Start as wide as possible: one pointer at each end. Width is largest here, so this is a strong starting candidate.',
+      'The water is capped by the SHORTER of the two walls, so the height of the container is min(left, right).',
+      'To have any chance of a bigger area you must move a pointer inward — but that shrinks the width. Moving the taller wall can never help (height is still capped by the shorter one), so always move the shorter wall.',
+      'Each step discards exactly the wall that can’t do better, so a single pass from both ends finds the maximum in O(n).',
+    ],
+    steps: [
+      'Put left at 0 and right at the last index; track the best area.',
+      'Compute area = min(height[left], height[right]) × (right − left) and update best.',
+      'Move whichever pointer is at the shorter wall one step inward.',
+      'Repeat until the pointers meet; return best.',
+    ],
+    complexity: { time: 'O(n) — each pointer moves inward at most n times.', space: 'O(1).' },
+    Visualizer: ContainerWithMostWaterViz,
+    code: CONTAINER_WATER,
+  },
+
+  {
+    slug: 'three-sum',
+    category: 'two-pointers',
+    title: '3Sum',
+    difficulty: 'Medium',
+    blurb: 'Find every unique triplet that sums to zero — sort, then two-pointer.',
+    tags: ['LeetCode 15', 'Two Pointers', 'Sorting'],
+    statement:
+      'Given an integer array nums, return all unique triplets [a, b, c] such that a + b + c = 0. The solution set must not contain duplicate triplets.',
+    intuition: [
+      'Sorting unlocks the two-pointer trick and makes duplicate-skipping easy, at a cost of only O(n log n).',
+      'Fix one number as an anchor (nums[i]); the problem reduces to “find two numbers in the rest that sum to −nums[i]” — the classic sorted two-pointer scan.',
+      'With left just after the anchor and right at the end: if the sum is too small move left up (bigger), if too big move right down (smaller), if exactly zero record it.',
+      'Skip duplicate values for the anchor and after finding a triplet, so each combination is reported once. Overall O(n²).',
+    ],
+    steps: [
+      'Sort nums.',
+      'For each anchor i (skipping repeats), set left = i + 1, right = n − 1.',
+      'While left < right, compare nums[i] + nums[left] + nums[right] to 0 and move the appropriate pointer.',
+      'On a zero sum, record the triplet, move both pointers, and skip any duplicate values.',
+      'Return all collected triplets.',
+    ],
+    complexity: { time: 'O(n²) — an O(n) two-pointer scan for each of n anchors.', space: 'O(1) beyond the output (ignoring the sort).' },
+    Visualizer: ThreeSumViz,
+    code: THREE_SUM,
+  },
+
+  {
+    slug: 'trapping-rain-water',
+    category: 'two-pointers',
+    title: 'Trapping Rain Water',
+    difficulty: 'Hard',
+    blurb: 'Sum the water trapped between bars — two pointers, O(1) space.',
+    tags: ['LeetCode 42', 'Two Pointers', 'Dynamic Programming'],
+    statement:
+      'Given an array height representing an elevation map where the width of each bar is 1, compute how much water it can trap after raining.',
+    intuition: [
+      'Water above a bar is limited by the tallest wall to its left and the tallest to its right: trapped = min(leftMax, rightMax) − height[i].',
+      'Use two pointers with running maxima leftMax and rightMax. The clever part: whichever side currently has the SHORTER wall is the binding constraint, so that column’s water is fully determined right now.',
+      'If height[left] < height[right], then leftMax is guaranteed ≤ rightMax for the left column, so add leftMax − height[left] and move left inward. Otherwise do the mirror on the right.',
+      'This resolves one column per step in a single pass — O(n) time and O(1) space, no prefix arrays needed.',
+    ],
+    steps: [
+      'Put left at 0 and right at the end; track leftMax, rightMax, and total water.',
+      'Compare height[left] and height[right]; work on the shorter side.',
+      'Update that side’s running max, add (max − height) to water, and step that pointer inward.',
+      'Repeat until the pointers meet; return the total.',
+    ],
+    complexity: { time: 'O(n) — single pass.', space: 'O(1).' },
+    Visualizer: TrappingRainWaterViz,
+    code: TRAPPING_WATER,
+  },
+
+  {
+    slug: 'character-replacement',
+    category: 'sliding-window',
+    title: 'Longest Repeating Character Replacement',
+    difficulty: 'Medium',
+    blurb: 'Longest run you can make uniform with at most k replacements — sliding window.',
+    tags: ['LeetCode 424', 'Sliding Window', 'Hash Map'],
+    statement:
+      'You are given a string s and an integer k. You may replace at most k characters with any uppercase letter. Return the length of the longest substring that can be made up of a single repeated character after those replacements.',
+    intuition: [
+      'A window can be made uniform if the number of characters to replace — its length minus the count of its most frequent letter — is at most k.',
+      'Grow a window to the right, keeping a tally of letter counts and the highest count seen (maxFreq).',
+      'Whenever (window length − maxFreq) exceeds k, the window needs too many replacements: shrink it from the left until it is valid again.',
+      'Track the largest valid window length. (maxFreq is never decreased on shrink; that is fine because the answer only ever grows.)',
+    ],
+    steps: [
+      'Keep a count map, a left pointer, maxFreq, and best.',
+      'For each right, add s[right] to the counts and update maxFreq.',
+      'While (right − left + 1) − maxFreq > k, remove s[left] and advance left.',
+      'Update best with the current window length; return best.',
+    ],
+    complexity: { time: 'O(n) — each pointer advances at most n times.', space: 'O(1) — at most 26 letter counts.' },
+    Visualizer: CharacterReplacementViz,
+    code: CHARACTER_REPLACEMENT,
   },
 
   {
@@ -2972,6 +3442,10 @@ const ADDED: Record<string, string> = {
   'lru-cache': '2026-06-22T00:42:42Z',
   trie: '2026-06-22T00:50:00Z',
   'word-search': '2026-06-22T00:57:40Z',
+  'container-with-most-water': '2026-07-11T10:00:00Z',
+  'three-sum': '2026-07-11T10:10:00Z',
+  'trapping-rain-water': '2026-07-11T10:20:00Z',
+  'character-replacement': '2026-07-11T10:30:00Z',
 }
 
 // Newest algorithms first (by publish date), for the home page.
