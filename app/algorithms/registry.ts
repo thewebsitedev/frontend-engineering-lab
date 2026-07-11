@@ -17,6 +17,7 @@ import MeetingRoomsViz from './algos/meeting-rooms/MeetingRoomsViz'
 import LRUCacheViz from './algos/lru-cache/LRUCacheViz'
 import TrieViz from './algos/trie/TrieViz'
 import WordSearchViz from './algos/word-search/WordSearchViz'
+import LongestConsecutiveViz from './algos/longest-consecutive/LongestConsecutiveViz'
 
 // Lowest Common Ancestor has two notable solutions, shared below.
 const LCA_RECURSIVE: Record<Lang, string> = {
@@ -1393,6 +1394,95 @@ public:
 `,
 }
 
+// Longest Consecutive Sequence: hash set + only count from the start of each run.
+const LONGEST_CONSECUTIVE: Record<Lang, string> = {
+  py: `def longestConsecutive(nums):
+    num_set = set(nums)
+    best = 0
+    for n in num_set:
+        if n - 1 not in num_set:        # n starts a run
+            length = 1
+            cur = n
+            while cur + 1 in num_set:
+                cur += 1
+                length += 1
+            best = max(best, length)
+    return best
+`,
+  js: `function longestConsecutive(nums) {
+  const set = new Set(nums);
+  let best = 0;
+  for (const n of set) {
+    if (!set.has(n - 1)) {          // n starts a run
+      let length = 1;
+      let cur = n;
+      while (set.has(cur + 1)) {
+        cur++;
+        length++;
+      }
+      best = Math.max(best, length);
+    }
+  }
+  return best;
+}
+`,
+  ts: `function longestConsecutive(nums: number[]): number {
+  const set = new Set(nums);
+  let best = 0;
+  for (const n of set) {
+    if (!set.has(n - 1)) {          // n starts a run
+      let length = 1;
+      let cur = n;
+      while (set.has(cur + 1)) {
+        cur++;
+        length++;
+      }
+      best = Math.max(best, length);
+    }
+  }
+  return best;
+}
+`,
+  java: `class Solution {
+    public int longestConsecutive(int[] nums) {
+        Set<Integer> set = new HashSet<>();
+        for (int x : nums) set.add(x);
+        int best = 0;
+        for (int n : set) {
+            if (!set.contains(n - 1)) {      // n starts a run
+                int length = 1, cur = n;
+                while (set.contains(cur + 1)) {
+                    cur++;
+                    length++;
+                }
+                best = Math.max(best, length);
+            }
+        }
+        return best;
+    }
+}
+`,
+  cpp: `class Solution {
+public:
+    int longestConsecutive(vector<int>& nums) {
+        unordered_set<int> set(nums.begin(), nums.end());
+        int best = 0;
+        for (int n : set) {
+            if (!set.count(n - 1)) {         // n starts a run
+                int length = 1, cur = n;
+                while (set.count(cur + 1)) {
+                    cur++;
+                    length++;
+                }
+                best = max(best, length);
+            }
+        }
+        return best;
+    }
+};
+`,
+}
+
 export const CATEGORIES: Category[] = [
   {
     slug: 'union-find',
@@ -1999,6 +2089,36 @@ public:
         code: PRODUCT_TWO_ARRAYS,
       },
     ],
+  },
+
+  {
+    slug: 'longest-consecutive',
+    category: 'arrays-hashing',
+    title: 'Longest Consecutive Sequence',
+    difficulty: 'Medium',
+    blurb: 'Find the longest run of consecutive integers — in O(n), without sorting.',
+    tags: ['LeetCode 128', 'Hash Set', 'Arrays'],
+    statement:
+      'Given an unsorted array of integers nums, return the length of the longest sequence of consecutive integers. The elements do not need to be adjacent in the array. The algorithm must run in O(n) time.',
+    intuition: [
+      'Sorting would make consecutive numbers neighbours, but that costs O(n log n). Instead, drop every number into a hash set so you can test “is x here?” in O(1).',
+      'The key insight: only start counting a run from its true beginning. A number n begins a run exactly when n − 1 is NOT in the set — otherwise n is in the middle of some other run and will be counted from that run’s start.',
+      'From a run start, walk forward — n, n+1, n+2, … — using set lookups until the next number is missing, tracking the length.',
+      'Because each number is only ever walked over as part of the single run it belongs to, the total work is O(n) even though there is a loop inside a loop.',
+    ],
+    steps: [
+      'Put all numbers into a hash set (this also removes duplicates).',
+      'For each number n, check if n − 1 is in the set.',
+      'If it is, skip n — it is not the start of a run.',
+      'If it is not, walk n, n+1, n+2, … while each is in the set, counting the length.',
+      'Track the longest length seen and return it.',
+    ],
+    complexity: {
+      time: 'O(n) — each number is visited at most twice (once by the for-loop, once while extending a run).',
+      space: 'O(n) for the hash set.',
+    },
+    Visualizer: LongestConsecutiveViz,
+    code: LONGEST_CONSECUTIVE,
   },
 
   {
@@ -2972,6 +3092,7 @@ const ADDED: Record<string, string> = {
   'lru-cache': '2026-06-22T00:42:42Z',
   trie: '2026-06-22T00:50:00Z',
   'word-search': '2026-06-22T00:57:40Z',
+  'longest-consecutive': '2026-06-23T00:00:00Z',
 }
 
 // Newest algorithms first (by publish date), for the home page.
