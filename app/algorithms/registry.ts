@@ -17,6 +17,7 @@ import MeetingRoomsViz from './algos/meeting-rooms/MeetingRoomsViz'
 import LRUCacheViz from './algos/lru-cache/LRUCacheViz'
 import TrieViz from './algos/trie/TrieViz'
 import WordSearchViz from './algos/word-search/WordSearchViz'
+import ValidateBstViz from './algos/validate-bst/ValidateBstViz'
 
 // Lowest Common Ancestor has two notable solutions, shared below.
 const LCA_RECURSIVE: Record<Lang, string> = {
@@ -1393,6 +1394,65 @@ public:
 `,
 }
 
+// Validate BST: DFS carrying an allowed (low, high) range for each node.
+const VALIDATE_BST: Record<Lang, string> = {
+  py: `def isValidBST(root):
+    def valid(node, low, high):
+        if not node:
+            return True
+        if node.val <= low or node.val >= high:
+            return False
+        return (valid(node.left, low, node.val) and
+                valid(node.right, node.val, high))
+    return valid(root, float('-inf'), float('inf'))
+`,
+  js: `function isValidBST(root) {
+  function valid(node, low, high) {
+    if (!node) return true;
+    if (node.val <= low || node.val >= high) return false;
+    return valid(node.left,  low,      node.val)
+        && valid(node.right, node.val, high);
+  }
+  return valid(root, -Infinity, Infinity);
+}
+`,
+  ts: `function isValidBST(root: TreeNode | null): boolean {
+  function valid(node: TreeNode | null, low: number, high: number): boolean {
+    if (!node) return true;
+    if (node.val <= low || node.val >= high) return false;
+    return valid(node.left,  low,      node.val)
+        && valid(node.right, node.val, high);
+  }
+  return valid(root, -Infinity, Infinity);
+}
+`,
+  java: `class Solution {
+    public boolean isValidBST(TreeNode root) {
+        return valid(root, Long.MIN_VALUE, Long.MAX_VALUE);
+    }
+    private boolean valid(TreeNode node, long low, long high) {
+        if (node == null) return true;
+        if (node.val <= low || node.val >= high) return false;
+        return valid(node.left, low, node.val)
+            && valid(node.right, node.val, high);
+    }
+}
+`,
+  cpp: `class Solution {
+    bool valid(TreeNode* node, long low, long high) {
+        if (!node) return true;
+        if (node->val <= low || node->val >= high) return false;
+        return valid(node->left, low, node->val)
+            && valid(node->right, node->val, high);
+    }
+public:
+    bool isValidBST(TreeNode* root) {
+        return valid(root, LONG_MIN, LONG_MAX);
+    }
+};
+`,
+}
+
 export const CATEGORIES: Category[] = [
   {
     slug: 'union-find',
@@ -2202,6 +2262,32 @@ public:
   },
 
   {
+    slug: 'validate-bst',
+    category: 'trees',
+    title: 'Validate Binary Search Tree',
+    difficulty: 'Medium',
+    blurb: 'Check that a tree is a BST using an allowed (low, high) range per node.',
+    tags: ['LeetCode 98', 'DFS', 'Binary Search Tree'],
+    statement:
+      'Given the root of a binary tree, determine whether it is a valid binary search tree (BST). In a valid BST, a node’s ENTIRE left subtree contains only smaller values, its ENTIRE right subtree only larger values, and both subtrees are themselves BSTs.',
+    intuition: [
+      'The common mistake is checking only node.val vs its direct children. That misses violations like a small value buried deep in a right subtree — it must still exceed every ancestor it branched right from.',
+      'Instead, carry an allowed open range (low, high) down the recursion. The root may be anything, so it starts as (−∞, +∞).',
+      'A node is valid only if low < node.val < high. When you descend left, the value becomes the new upper bound; when you descend right, it becomes the new lower bound.',
+      'If any node falls outside its range, the whole tree fails. If every node fits, it is a valid BST.',
+    ],
+    steps: [
+      'Call valid(root, −∞, +∞).',
+      'A null node is trivially valid → return true.',
+      'If node.val ≤ low or node.val ≥ high, return false.',
+      'Recurse left with (low, node.val) and right with (node.val, high); both must pass.',
+    ],
+    complexity: { time: 'O(n) — each node is visited once.', space: 'O(h) for the recursion stack, where h is the tree height.' },
+    Visualizer: ValidateBstViz,
+    code: VALIDATE_BST,
+  },
+
+  {
     slug: 'merge-intervals',
     category: 'intervals',
     title: 'Merge Intervals',
@@ -2972,6 +3058,7 @@ const ADDED: Record<string, string> = {
   'lru-cache': '2026-06-22T00:42:42Z',
   trie: '2026-06-22T00:50:00Z',
   'word-search': '2026-06-22T00:57:40Z',
+  'validate-bst': '2026-07-11T12:00:00Z',
 }
 
 // Newest algorithms first (by publish date), for the home page.
