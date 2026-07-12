@@ -23,6 +23,15 @@ import ThreeSumViz from './algos/three-sum/ThreeSumViz'
 import TrappingRainWaterViz from './algos/trapping-rain-water/TrappingRainWaterViz'
 import CharacterReplacementViz from './algos/character-replacement/CharacterReplacementViz'
 import ValidateBstViz from './algos/validate-bst/ValidateBstViz'
+import GraphValidTreeViz from './algos/graph-valid-tree/GraphValidTreeViz'
+import ReverseLinkedListViz from './algos/reverse-linked-list/ReverseLinkedListViz'
+import SearchRotatedViz from './algos/search-rotated/SearchRotatedViz'
+import SubsetsViz from './algos/subsets/SubsetsViz'
+import CombinationSumViz from './algos/combination-sum/CombinationSumViz'
+import HouseRobberViz from './algos/house-robber/HouseRobberViz'
+import CoinChangeViz from './algos/coin-change/CoinChangeViz'
+import WordBreakViz from './algos/word-break/WordBreakViz'
+import LongestIncreasingViz from './algos/longest-increasing-subsequence/LongestIncreasingViz'
 
 // Lowest Common Ancestor has two notable solutions, shared below.
 const LCA_RECURSIVE: Record<Lang, string> = {
@@ -1903,6 +1912,725 @@ public:
 `,
 }
 
+const GRAPH_VALID_TREE: Record<Lang, string> = {
+  py: `def validTree(n, edges):
+    if len(edges) != n - 1:      # a tree on n nodes has exactly n-1 edges
+        return False
+    parent = list(range(n))
+
+    def find(x):
+        while parent[x] != x:
+            x = parent[x]
+        return x
+
+    for u, v in edges:
+        ru, rv = find(u), find(v)
+        if ru == rv:             # already connected -> cycle
+            return False
+        parent[ru] = rv          # union
+    return True
+`,
+  js: `function validTree(n, edges) {
+  if (edges.length !== n - 1) return false;   // a tree has exactly n-1 edges
+  const parent = [...Array(n).keys()];
+  const find = (x) => {
+    while (parent[x] !== x) x = parent[x];
+    return x;
+  };
+  for (const [u, v] of edges) {
+    const ru = find(u), rv = find(v);
+    if (ru === rv) return false;   // already connected -> cycle
+    parent[ru] = rv;               // union
+  }
+  return true;
+}
+`,
+  ts: `function validTree(n: number, edges: number[][]): boolean {
+  if (edges.length !== n - 1) return false;   // a tree has exactly n-1 edges
+  const parent = [...Array(n).keys()];
+  const find = (x: number): number => {
+    while (parent[x] !== x) x = parent[x];
+    return x;
+  };
+  for (const [u, v] of edges) {
+    const ru = find(u), rv = find(v);
+    if (ru === rv) return false;   // already connected -> cycle
+    parent[ru] = rv;               // union
+  }
+  return true;
+}
+`,
+  java: `class Solution {
+    private int[] parent;
+    private int find(int x) {
+        while (parent[x] != x) x = parent[x];
+        return x;
+    }
+    public boolean validTree(int n, int[][] edges) {
+        if (edges.length != n - 1) return false;   // exactly n-1 edges
+        parent = new int[n];
+        for (int i = 0; i < n; i++) parent[i] = i;
+        for (int[] e : edges) {
+            int ru = find(e[0]), rv = find(e[1]);
+            if (ru == rv) return false;   // cycle
+            parent[ru] = rv;              // union
+        }
+        return true;
+    }
+}
+`,
+  cpp: `class Solution {
+    vector<int> parent;
+    int find(int x) {
+        while (parent[x] != x) x = parent[x];
+        return x;
+    }
+public:
+    bool validTree(int n, vector<vector<int>>& edges) {
+        if ((int)edges.size() != n - 1) return false;   // exactly n-1 edges
+        parent.resize(n);
+        for (int i = 0; i < n; i++) parent[i] = i;
+        for (auto& e : edges) {
+            int ru = find(e[0]), rv = find(e[1]);
+            if (ru == rv) return false;   // cycle
+            parent[ru] = rv;              // union
+        }
+        return true;
+    }
+};
+`,
+}
+
+const REVERSE_LIST: Record<Lang, string> = {
+  py: `def reverseList(head):
+    prev = None
+    curr = head
+    while curr:
+        nxt = curr.next     # save the rest of the list
+        curr.next = prev    # flip this link backward
+        prev = curr         # advance prev
+        curr = nxt          # advance curr
+    return prev             # prev is the new head
+`,
+  js: `function reverseList(head) {
+  let prev = null;
+  let curr = head;
+  while (curr !== null) {
+    const next = curr.next;   // save the rest of the list
+    curr.next = prev;         // flip this link backward
+    prev = curr;              // advance prev
+    curr = next;              // advance curr
+  }
+  return prev;                // prev is the new head
+}
+`,
+  ts: `function reverseList(head: ListNode | null): ListNode | null {
+  let prev: ListNode | null = null;
+  let curr: ListNode | null = head;
+  while (curr !== null) {
+    const next: ListNode | null = curr.next;   // save the rest
+    curr.next = prev;                          // flip backward
+    prev = curr;
+    curr = next;
+  }
+  return prev;
+}
+`,
+  java: `class Solution {
+    public ListNode reverseList(ListNode head) {
+        ListNode prev = null, curr = head;
+        while (curr != null) {
+            ListNode next = curr.next;   // save the rest
+            curr.next = prev;            // flip backward
+            prev = curr;
+            curr = next;
+        }
+        return prev;
+    }
+}
+`,
+  cpp: `class Solution {
+public:
+    ListNode* reverseList(ListNode* head) {
+        ListNode* prev = nullptr;
+        ListNode* curr = head;
+        while (curr) {
+            ListNode* next = curr->next;   // save the rest
+            curr->next = prev;             // flip backward
+            prev = curr;
+            curr = next;
+        }
+        return prev;
+    }
+};
+`,
+}
+
+const SEARCH_ROTATED: Record<Lang, string> = {
+  py: `def search(nums, target):
+    lo, hi = 0, len(nums) - 1
+    while lo <= hi:
+        mid = (lo + hi) // 2
+        if nums[mid] == target:
+            return mid
+        if nums[lo] <= nums[mid]:              # left half is sorted
+            if nums[lo] <= target < nums[mid]:
+                hi = mid - 1
+            else:
+                lo = mid + 1
+        else:                                  # right half is sorted
+            if nums[mid] < target <= nums[hi]:
+                lo = mid + 1
+            else:
+                hi = mid - 1
+    return -1
+`,
+  js: `function search(nums, target) {
+  let lo = 0, hi = nums.length - 1;
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1;
+    if (nums[mid] === target) return mid;
+    if (nums[lo] <= nums[mid]) {               // left half sorted
+      if (nums[lo] <= target && target < nums[mid]) hi = mid - 1;
+      else lo = mid + 1;
+    } else {                                   // right half sorted
+      if (nums[mid] < target && target <= nums[hi]) lo = mid + 1;
+      else hi = mid - 1;
+    }
+  }
+  return -1;
+}
+`,
+  ts: `function search(nums: number[], target: number): number {
+  let lo = 0, hi = nums.length - 1;
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1;
+    if (nums[mid] === target) return mid;
+    if (nums[lo] <= nums[mid]) {               // left half sorted
+      if (nums[lo] <= target && target < nums[mid]) hi = mid - 1;
+      else lo = mid + 1;
+    } else {                                   // right half sorted
+      if (nums[mid] < target && target <= nums[hi]) lo = mid + 1;
+      else hi = mid - 1;
+    }
+  }
+  return -1;
+}
+`,
+  java: `class Solution {
+    public int search(int[] nums, int target) {
+        int lo = 0, hi = nums.length - 1;
+        while (lo <= hi) {
+            int mid = (lo + hi) >>> 1;
+            if (nums[mid] == target) return mid;
+            if (nums[lo] <= nums[mid]) {            // left half sorted
+                if (nums[lo] <= target && target < nums[mid]) hi = mid - 1;
+                else lo = mid + 1;
+            } else {                                // right half sorted
+                if (nums[mid] < target && target <= nums[hi]) lo = mid + 1;
+                else hi = mid - 1;
+            }
+        }
+        return -1;
+    }
+}
+`,
+  cpp: `class Solution {
+public:
+    int search(vector<int>& nums, int target) {
+        int lo = 0, hi = nums.size() - 1;
+        while (lo <= hi) {
+            int mid = lo + (hi - lo) / 2;
+            if (nums[mid] == target) return mid;
+            if (nums[lo] <= nums[mid]) {            // left half sorted
+                if (nums[lo] <= target && target < nums[mid]) hi = mid - 1;
+                else lo = mid + 1;
+            } else {                                // right half sorted
+                if (nums[mid] < target && target <= nums[hi]) lo = mid + 1;
+                else hi = mid - 1;
+            }
+        }
+        return -1;
+    }
+};
+`,
+}
+
+const SUBSETS_CODE: Record<Lang, string> = {
+  py: `def subsets(nums):
+    res, path = [], []
+
+    def backtrack(start):
+        res.append(path[:])          # every path is itself a subset
+        for i in range(start, len(nums)):
+            path.append(nums[i])     # choose
+            backtrack(i + 1)         # explore
+            path.pop()               # un-choose (backtrack)
+
+    backtrack(0)
+    return res
+`,
+  js: `function subsets(nums) {
+  const res = [], path = [];
+  function backtrack(start) {
+    res.push([...path]);              // every path is itself a subset
+    for (let i = start; i < nums.length; i++) {
+      path.push(nums[i]);             // choose
+      backtrack(i + 1);               // explore
+      path.pop();                     // un-choose (backtrack)
+    }
+  }
+  backtrack(0);
+  return res;
+}
+`,
+  ts: `function subsets(nums: number[]): number[][] {
+  const res: number[][] = [], path: number[] = [];
+  function backtrack(start: number): void {
+    res.push([...path]);
+    for (let i = start; i < nums.length; i++) {
+      path.push(nums[i]);
+      backtrack(i + 1);
+      path.pop();
+    }
+  }
+  backtrack(0);
+  return res;
+}
+`,
+  java: `class Solution {
+    private final List<List<Integer>> res = new ArrayList<>();
+    private final List<Integer> path = new ArrayList<>();
+
+    public List<List<Integer>> subsets(int[] nums) {
+        backtrack(nums, 0);
+        return res;
+    }
+    private void backtrack(int[] nums, int start) {
+        res.add(new ArrayList<>(path));
+        for (int i = start; i < nums.length; i++) {
+            path.add(nums[i]);              // choose
+            backtrack(nums, i + 1);         // explore
+            path.remove(path.size() - 1);   // un-choose
+        }
+    }
+}
+`,
+  cpp: `class Solution {
+    vector<vector<int>> res;
+    vector<int> path;
+    void backtrack(vector<int>& nums, int start) {
+        res.push_back(path);
+        for (int i = start; i < (int)nums.size(); i++) {
+            path.push_back(nums[i]);   // choose
+            backtrack(nums, i + 1);    // explore
+            path.pop_back();           // un-choose
+        }
+    }
+public:
+    vector<vector<int>> subsets(vector<int>& nums) {
+        backtrack(nums, 0);
+        return res;
+    }
+};
+`,
+}
+
+const COMBINATION_SUM: Record<Lang, string> = {
+  py: `def combinationSum(candidates, target):
+    res, path = [], []
+
+    def backtrack(start, remain):
+        if remain == 0:
+            res.append(path[:])
+            return
+        if remain < 0:
+            return                      # overshot -> prune
+        for i in range(start, len(candidates)):
+            path.append(candidates[i])
+            backtrack(i, remain - candidates[i])   # i, not i+1 -> reuse allowed
+            path.pop()
+
+    backtrack(0, target)
+    return res
+`,
+  js: `function combinationSum(candidates, target) {
+  const res = [], path = [];
+  function backtrack(start, remain) {
+    if (remain === 0) { res.push([...path]); return; }
+    if (remain < 0) return;                  // overshot -> prune
+    for (let i = start; i < candidates.length; i++) {
+      path.push(candidates[i]);
+      backtrack(i, remain - candidates[i]);  // i, not i+1 -> reuse allowed
+      path.pop();
+    }
+  }
+  backtrack(0, target);
+  return res;
+}
+`,
+  ts: `function combinationSum(candidates: number[], target: number): number[][] {
+  const res: number[][] = [], path: number[] = [];
+  function backtrack(start: number, remain: number): void {
+    if (remain === 0) { res.push([...path]); return; }
+    if (remain < 0) return;                  // overshot -> prune
+    for (let i = start; i < candidates.length; i++) {
+      path.push(candidates[i]);
+      backtrack(i, remain - candidates[i]);  // reuse allowed
+      path.pop();
+    }
+  }
+  backtrack(0, target);
+  return res;
+}
+`,
+  java: `class Solution {
+    private final List<List<Integer>> res = new ArrayList<>();
+    private final List<Integer> path = new ArrayList<>();
+
+    public List<List<Integer>> combinationSum(int[] candidates, int target) {
+        backtrack(candidates, 0, target);
+        return res;
+    }
+    private void backtrack(int[] cands, int start, int remain) {
+        if (remain == 0) { res.add(new ArrayList<>(path)); return; }
+        if (remain < 0) return;                      // prune
+        for (int i = start; i < cands.length; i++) {
+            path.add(cands[i]);
+            backtrack(cands, i, remain - cands[i]);  // reuse allowed
+            path.remove(path.size() - 1);
+        }
+    }
+}
+`,
+  cpp: `class Solution {
+    vector<vector<int>> res;
+    vector<int> path;
+    void backtrack(vector<int>& cands, int start, int remain) {
+        if (remain == 0) { res.push_back(path); return; }
+        if (remain < 0) return;                      // prune
+        for (int i = start; i < (int)cands.size(); i++) {
+            path.push_back(cands[i]);
+            backtrack(cands, i, remain - cands[i]);  // reuse allowed
+            path.pop_back();
+        }
+    }
+public:
+    vector<vector<int>> combinationSum(vector<int>& candidates, int target) {
+        backtrack(candidates, 0, target);
+        return res;
+    }
+};
+`,
+}
+
+const HOUSE_ROBBER: Record<Lang, string> = {
+  py: `def rob(nums):
+    n = len(nums)
+    if n == 0:
+        return 0
+    dp = [0] * n                                     # dp[i] = best loot through house i
+    dp[0] = nums[0]
+    for i in range(1, n):
+        take = (dp[i - 2] if i >= 2 else 0) + nums[i]   # rob i, so skip i-1
+        skip = dp[i - 1]                                # skip i
+        dp[i] = max(take, skip)
+    return dp[n - 1]
+`,
+  js: `function rob(nums) {
+  const n = nums.length;
+  if (n === 0) return 0;
+  const dp = new Array(n).fill(0);      // dp[i] = best loot through house i
+  dp[0] = nums[0];
+  for (let i = 1; i < n; i++) {
+    const take = (i >= 2 ? dp[i - 2] : 0) + nums[i];   // rob i, so skip i-1
+    const skip = dp[i - 1];                            // skip i
+    dp[i] = Math.max(take, skip);
+  }
+  return dp[n - 1];
+}
+`,
+  ts: `function rob(nums: number[]): number {
+  const n = nums.length;
+  if (n === 0) return 0;
+  const dp = new Array(n).fill(0);
+  dp[0] = nums[0];
+  for (let i = 1; i < n; i++) {
+    const take = (i >= 2 ? dp[i - 2] : 0) + nums[i];
+    const skip = dp[i - 1];
+    dp[i] = Math.max(take, skip);
+  }
+  return dp[n - 1];
+}
+`,
+  java: `class Solution {
+    public int rob(int[] nums) {
+        int n = nums.length;
+        if (n == 0) return 0;
+        int[] dp = new int[n];
+        dp[0] = nums[0];
+        for (int i = 1; i < n; i++) {
+            int take = (i >= 2 ? dp[i - 2] : 0) + nums[i];
+            int skip = dp[i - 1];
+            dp[i] = Math.max(take, skip);
+        }
+        return dp[n - 1];
+    }
+}
+`,
+  cpp: `class Solution {
+public:
+    int rob(vector<int>& nums) {
+        int n = nums.size();
+        if (n == 0) return 0;
+        vector<int> dp(n, 0);
+        dp[0] = nums[0];
+        for (int i = 1; i < n; i++) {
+            int take = (i >= 2 ? dp[i - 2] : 0) + nums[i];
+            int skip = dp[i - 1];
+            dp[i] = max(take, skip);
+        }
+        return dp[n - 1];
+    }
+};
+`,
+}
+
+const COIN_CHANGE: Record<Lang, string> = {
+  py: `def coinChange(coins, amount):
+    dp = [float('inf')] * (amount + 1)
+    dp[0] = 0                                # 0 coins make amount 0
+    for a in range(1, amount + 1):
+        for coin in coins:
+            if coin <= a:
+                dp[a] = min(dp[a], dp[a - coin] + 1)
+    return -1 if dp[amount] == float('inf') else dp[amount]
+`,
+  js: `function coinChange(coins, amount) {
+  const dp = new Array(amount + 1).fill(Infinity);
+  dp[0] = 0;                                 // 0 coins make amount 0
+  for (let a = 1; a <= amount; a++) {
+    for (const coin of coins) {
+      if (coin <= a) {
+        dp[a] = Math.min(dp[a], dp[a - coin] + 1);
+      }
+    }
+  }
+  return dp[amount] === Infinity ? -1 : dp[amount];
+}
+`,
+  ts: `function coinChange(coins: number[], amount: number): number {
+  const dp = new Array(amount + 1).fill(Infinity);
+  dp[0] = 0;
+  for (let a = 1; a <= amount; a++) {
+    for (const coin of coins) {
+      if (coin <= a) {
+        dp[a] = Math.min(dp[a], dp[a - coin] + 1);
+      }
+    }
+  }
+  return dp[amount] === Infinity ? -1 : dp[amount];
+}
+`,
+  java: `class Solution {
+    public int coinChange(int[] coins, int amount) {
+        int[] dp = new int[amount + 1];
+        Arrays.fill(dp, amount + 1);   // stand-in for "infinity"
+        dp[0] = 0;
+        for (int a = 1; a <= amount; a++) {
+            for (int coin : coins) {
+                if (coin <= a) {
+                    dp[a] = Math.min(dp[a], dp[a - coin] + 1);
+                }
+            }
+        }
+        return dp[amount] > amount ? -1 : dp[amount];
+    }
+}
+`,
+  cpp: `class Solution {
+public:
+    int coinChange(vector<int>& coins, int amount) {
+        vector<int> dp(amount + 1, amount + 1);   // stand-in for "infinity"
+        dp[0] = 0;
+        for (int a = 1; a <= amount; a++) {
+            for (int coin : coins) {
+                if (coin <= a) {
+                    dp[a] = min(dp[a], dp[a - coin] + 1);
+                }
+            }
+        }
+        return dp[amount] > amount ? -1 : dp[amount];
+    }
+};
+`,
+}
+
+const WORD_BREAK: Record<Lang, string> = {
+  py: `def wordBreak(s, wordDict):
+    words = set(wordDict)
+    dp = [False] * (len(s) + 1)
+    dp[0] = True                       # empty prefix is always breakable
+    for i in range(1, len(s) + 1):
+        for j in range(i):
+            if dp[j] and s[j:i] in words:
+                dp[i] = True
+                break
+    return dp[len(s)]
+`,
+  js: `function wordBreak(s, wordDict) {
+  const words = new Set(wordDict);
+  const dp = new Array(s.length + 1).fill(false);
+  dp[0] = true;                        // empty prefix is always breakable
+  for (let i = 1; i <= s.length; i++) {
+    for (let j = 0; j < i; j++) {
+      if (dp[j] && words.has(s.slice(j, i))) {
+        dp[i] = true;
+        break;
+      }
+    }
+  }
+  return dp[s.length];
+}
+`,
+  ts: `function wordBreak(s: string, wordDict: string[]): boolean {
+  const words = new Set(wordDict);
+  const dp = new Array(s.length + 1).fill(false);
+  dp[0] = true;
+  for (let i = 1; i <= s.length; i++) {
+    for (let j = 0; j < i; j++) {
+      if (dp[j] && words.has(s.slice(j, i))) {
+        dp[i] = true;
+        break;
+      }
+    }
+  }
+  return dp[s.length];
+}
+`,
+  java: `class Solution {
+    public boolean wordBreak(String s, List<String> wordDict) {
+        Set<String> words = new HashSet<>(wordDict);
+        boolean[] dp = new boolean[s.length() + 1];
+        dp[0] = true;
+        for (int i = 1; i <= s.length(); i++) {
+            for (int j = 0; j < i; j++) {
+                if (dp[j] && words.contains(s.substring(j, i))) {
+                    dp[i] = true;
+                    break;
+                }
+            }
+        }
+        return dp[s.length()];
+    }
+}
+`,
+  cpp: `class Solution {
+public:
+    bool wordBreak(string s, vector<string>& wordDict) {
+        unordered_set<string> words(wordDict.begin(), wordDict.end());
+        vector<bool> dp(s.size() + 1, false);
+        dp[0] = true;
+        for (int i = 1; i <= (int)s.size(); i++) {
+            for (int j = 0; j < i; j++) {
+                if (dp[j] && words.count(s.substr(j, i - j))) {
+                    dp[i] = true;
+                    break;
+                }
+            }
+        }
+        return dp[s.size()];
+    }
+};
+`,
+}
+
+const LIS_CODE: Record<Lang, string> = {
+  py: `def lengthOfLIS(nums):
+    n = len(nums)
+    if n == 0:
+        return 0
+    dp = [1] * n                  # dp[i] = LIS length ending at i
+    best = 1
+    for i in range(1, n):
+        for j in range(i):
+            if nums[j] < nums[i]:
+                dp[i] = max(dp[i], dp[j] + 1)
+        best = max(best, dp[i])
+    return best
+`,
+  js: `function lengthOfLIS(nums) {
+  const n = nums.length;
+  if (n === 0) return 0;
+  const dp = new Array(n).fill(1);   // dp[i] = LIS length ending at i
+  let best = 1;
+  for (let i = 1; i < n; i++) {
+    for (let j = 0; j < i; j++) {
+      if (nums[j] < nums[i]) {
+        dp[i] = Math.max(dp[i], dp[j] + 1);
+      }
+    }
+    best = Math.max(best, dp[i]);
+  }
+  return best;
+}
+`,
+  ts: `function lengthOfLIS(nums: number[]): number {
+  const n = nums.length;
+  if (n === 0) return 0;
+  const dp = new Array(n).fill(1);
+  let best = 1;
+  for (let i = 1; i < n; i++) {
+    for (let j = 0; j < i; j++) {
+      if (nums[j] < nums[i]) {
+        dp[i] = Math.max(dp[i], dp[j] + 1);
+      }
+    }
+    best = Math.max(best, dp[i]);
+  }
+  return best;
+}
+`,
+  java: `class Solution {
+    public int lengthOfLIS(int[] nums) {
+        int n = nums.length;
+        if (n == 0) return 0;
+        int[] dp = new int[n];
+        Arrays.fill(dp, 1);
+        int best = 1;
+        for (int i = 1; i < n; i++) {
+            for (int j = 0; j < i; j++) {
+                if (nums[j] < nums[i]) {
+                    dp[i] = Math.max(dp[i], dp[j] + 1);
+                }
+            }
+            best = Math.max(best, dp[i]);
+        }
+        return best;
+    }
+}
+`,
+  cpp: `class Solution {
+public:
+    int lengthOfLIS(vector<int>& nums) {
+        int n = nums.size();
+        if (n == 0) return 0;
+        vector<int> dp(n, 1);
+        int best = 1;
+        for (int i = 1; i < n; i++) {
+            for (int j = 0; j < i; j++) {
+                if (nums[j] < nums[i]) {
+                    dp[i] = max(dp[i], dp[j] + 1);
+                }
+            }
+            best = max(best, dp[i]);
+        }
+        return best;
+    }
+};
+`,
+}
+
 export const CATEGORIES: Category[] = [
   {
     slug: 'union-find',
@@ -1968,6 +2696,11 @@ export const CATEGORIES: Category[] = [
     slug: 'two-pointers',
     name: 'Two Pointers',
     blurb: 'Walk a pair of indices inward (or together) to avoid nested loops.',
+  },
+  {
+    slug: 'binary-search',
+    name: 'Binary Search',
+    blurb: 'Halve the search space each step over sorted or monotonic data.',
   },
 ]
 
@@ -3610,6 +4343,242 @@ public:
     code: VALIDATE_BST,
   },
 
+  {
+    slug: 'reverse-linked-list',
+    category: 'linked-list',
+    title: 'Reverse Linked List',
+    difficulty: 'Easy',
+    blurb: 'Flip every next pointer with three pointers: prev, curr, next.',
+    tags: ['LeetCode 206', 'Linked List', 'Two Pointers'],
+    statement: 'Given the head of a singly linked list, reverse the list and return the new head.',
+    intuition: [
+      'Reversing means every node’s next pointer should aim at the node that came BEFORE it instead of after.',
+      'Walk the list with curr, and keep prev = the node behind it. At each step, point curr.next back at prev.',
+      'The catch: overwriting curr.next destroys your only link to the rest of the list — so save next = curr.next FIRST.',
+      'Then shuffle everything forward: prev = curr, curr = next. When curr falls off the end, prev is sitting on the last node — the new head.',
+    ],
+    steps: [
+      'Set prev = null and curr = head.',
+      'While curr is not null: save next = curr.next.',
+      'Point curr.next at prev (the flip).',
+      'Advance prev = curr and curr = next.',
+      'Return prev — the new head.',
+    ],
+    complexity: { time: 'O(n) — one pass.', space: 'O(1) — only three pointers.' },
+    Visualizer: ReverseLinkedListViz,
+    code: REVERSE_LIST,
+  },
+
+  {
+    slug: 'search-rotated',
+    category: 'binary-search',
+    title: 'Search in Rotated Sorted Array',
+    difficulty: 'Medium',
+    blurb: 'Binary search a rotated array — one half is always still sorted.',
+    tags: ['LeetCode 33', 'Binary Search', 'Arrays'],
+    statement:
+      'An ascending sorted array was rotated at some unknown pivot (e.g. [0,1,2,4,5,6,7] → [4,5,6,7,0,1,2]). Given the array and a target, return the index of the target, or −1. The algorithm must run in O(log n).',
+    intuition: [
+      'Plain binary search breaks because the array isn’t globally sorted. But here is the key observation: no matter where you cut, at least ONE half of [lo, hi] is still perfectly sorted.',
+      'Compare nums[lo] with nums[mid]: if nums[lo] ≤ nums[mid], the left half is the sorted one; otherwise the rotation lies on the left and the right half is sorted.',
+      'Inside the sorted half you can test the target with a simple range check — that half is ordinary sorted data.',
+      'If the target falls inside the sorted half, search there; otherwise it must be in the other half. Either way you throw away half the array each step → O(log n).',
+    ],
+    steps: [
+      'Set lo = 0, hi = n − 1.',
+      'Take mid; if nums[mid] is the target, return mid.',
+      'Decide which half is sorted by comparing nums[lo] and nums[mid].',
+      'If the target lies inside that sorted half’s range, keep it; otherwise keep the other half.',
+      'Repeat until lo > hi, then return −1.',
+    ],
+    complexity: { time: 'O(log n) — the window halves each iteration.', space: 'O(1).' },
+    Visualizer: SearchRotatedViz,
+    code: SEARCH_ROTATED,
+  },
+
+  {
+    slug: 'subsets',
+    category: 'backtracking',
+    title: 'Subsets',
+    difficulty: 'Medium',
+    blurb: 'Generate every subset — the canonical choose / explore / un-choose pattern.',
+    tags: ['LeetCode 78', 'Backtracking', 'Recursion'],
+    statement:
+      'Given an array of unique integers nums, return all possible subsets (the power set). The solution set must not contain duplicate subsets.',
+    intuition: [
+      'Each element has exactly two fates: in the subset or out of it. That gives 2ⁿ subsets — and backtracking walks that decision tree.',
+      'Carry a running path (the subset built so far). Every state of the path is itself a valid subset, so record it the moment you enter a call — no special base case needed.',
+      'Then, for each remaining element, choose it (push), explore deeper (recurse from i + 1 so you never reuse or reorder), and un-choose it (pop).',
+      'That pop is the backtrack: it rewinds the path so the next branch starts from a clean state.',
+    ],
+    steps: [
+      'Start with an empty path and call backtrack(0).',
+      'On entry, push a copy of the current path into the results.',
+      'For each index i from start: push nums[i], recurse with i + 1, then pop.',
+      'The recursion naturally enumerates every include/exclude combination.',
+    ],
+    complexity: { time: 'O(n · 2ⁿ) — 2ⁿ subsets, each costing O(n) to copy.', space: 'O(n) recursion depth (plus the output).' },
+    Visualizer: SubsetsViz,
+    code: SUBSETS_CODE,
+  },
+
+  {
+    slug: 'combination-sum',
+    category: 'backtracking',
+    title: 'Combination Sum',
+    difficulty: 'Medium',
+    blurb: 'All combinations summing to a target — numbers may be reused.',
+    tags: ['LeetCode 39', 'Backtracking', 'Recursion'],
+    statement:
+      'Given an array of distinct integers candidates and a target, return all unique combinations of candidates that sum to the target. The same number may be chosen an unlimited number of times.',
+    intuition: [
+      'Instead of tracking the running sum, track what is LEFT (remain). Choosing a number simply subtracts it from remain — and remain = 0 means success.',
+      'Two base cases fall out naturally: remain == 0 → record the path; remain < 0 → you overshot, so prune this branch immediately.',
+      'Because a number can be reused, recurse with i (not i + 1) — the same candidate stays available at the next level.',
+      'Passing start = i (never going backwards) is what prevents duplicates like [2,3] and [3,2] from both appearing.',
+    ],
+    steps: [
+      'Call backtrack(0, target) with an empty path.',
+      'If remain == 0, record a copy of the path and return.',
+      'If remain < 0, return (prune).',
+      'For each candidate from start: push it, recurse with (i, remain − candidate), then pop.',
+    ],
+    complexity: { time: 'Exponential in the worst case — roughly O(n^(target/min)); pruning keeps it practical.', space: 'O(target/min) recursion depth.' },
+    Visualizer: CombinationSumViz,
+    code: COMBINATION_SUM,
+  },
+
+  {
+    slug: 'house-robber',
+    category: 'dynamic-programming',
+    title: 'House Robber',
+    difficulty: 'Medium',
+    blurb: 'Max loot without robbing two adjacent houses — the classic take-or-skip DP.',
+    tags: ['LeetCode 198', 'Dynamic Programming'],
+    statement:
+      'You are given an array nums where nums[i] is the money in house i. You cannot rob two adjacent houses (that triggers the alarm). Return the maximum amount you can rob.',
+    intuition: [
+      'At every house you face one binary choice: rob it, or skip it. That choice is all the state you need.',
+      'If you ROB house i, you cannot have robbed i − 1, so your total is dp[i − 2] + nums[i]. If you SKIP it, your total is just the best through i − 1, i.e. dp[i − 1].',
+      'So dp[i] = max(dp[i − 2] + nums[i], dp[i − 1]) — each house only ever looks two steps back.',
+      'Seed it with dp[0] = nums[0], and the last dp value is the answer. (Since only two previous values matter, this can be squeezed to O(1) space with two rolling variables.)',
+    ],
+    steps: [
+      'dp[i] = the most money robbable considering houses 0..i.',
+      'Base: dp[0] = nums[0].',
+      'For each i ≥ 1: take = dp[i−2] + nums[i], skip = dp[i−1].',
+      'dp[i] = max(take, skip); return dp[n−1].',
+    ],
+    complexity: { time: 'O(n) — one pass.', space: 'O(n) for the dp array (O(1) with rolling variables).' },
+    Visualizer: HouseRobberViz,
+    code: HOUSE_ROBBER,
+  },
+
+  {
+    slug: 'coin-change',
+    category: 'dynamic-programming',
+    title: 'Coin Change',
+    difficulty: 'Medium',
+    blurb: 'Fewest coins to make an amount — bottom-up DP, not greedy.',
+    tags: ['LeetCode 322', 'Dynamic Programming'],
+    statement:
+      'Given an array of coin denominations and a target amount, return the fewest number of coins needed to make up that amount. If it cannot be made, return −1. You have an unlimited supply of each coin.',
+    intuition: [
+      'Greedy (always take the biggest coin) is WRONG here: with coins [1,3,4] and amount 6, greedy gives 4+1+1 = 3 coins, but 3+3 = 2 is better. You must consider every option.',
+      'Build up from small amounts: dp[a] = the fewest coins to make amount a. Start dp[0] = 0 (zero coins make zero) and everything else at ∞ (unreachable so far).',
+      'To make amount a, try each coin as the LAST one used: that costs dp[a − coin] + 1. Take the cheapest across all coins.',
+      'If dp[amount] is still ∞ at the end, no combination works → return −1.',
+    ],
+    steps: [
+      'Fill dp[0..amount] with ∞ and set dp[0] = 0.',
+      'For each amount a from 1 to amount, and each coin ≤ a:',
+      'dp[a] = min(dp[a], dp[a − coin] + 1).',
+      'Return dp[amount], or −1 if it is still ∞.',
+    ],
+    complexity: { time: 'O(amount × number of coins).', space: 'O(amount) for the dp array.' },
+    Visualizer: CoinChangeViz,
+    code: COIN_CHANGE,
+  },
+
+  {
+    slug: 'word-break',
+    category: 'dynamic-programming',
+    title: 'Word Break',
+    difficulty: 'Medium',
+    blurb: 'Can a string be split into dictionary words? Reachability DP over prefixes.',
+    tags: ['LeetCode 139', 'Dynamic Programming', 'Hash Set'],
+    statement:
+      'Given a string s and a dictionary of words, return true if s can be segmented into a space-separated sequence of one or more dictionary words. Words may be reused.',
+    intuition: [
+      'Think of positions 0..n as stepping stones. dp[i] = true means “the first i characters can be split cleanly”, i.e. position i is reachable.',
+      'dp[0] = true — the empty prefix needs no words. It is the launch pad for everything else.',
+      'Position i is reachable if there is some earlier reachable position j where the chunk s[j..i) is a dictionary word. So you look BACK from i over every split point j.',
+      'Once you find one working j you can stop early (break) — one valid split is all it takes. The answer is dp[n].',
+    ],
+    steps: [
+      'Put the dictionary into a hash set for O(1) lookups.',
+      'dp[0] = true; all other dp values start false.',
+      'For each end i, scan every start j < i: if dp[j] is true and s[j..i) is a word, set dp[i] = true and break.',
+      'Return dp[s.length].',
+    ],
+    complexity: { time: 'O(n² · L) — n² substrings, each hashed in O(L).', space: 'O(n) for dp plus the word set.' },
+    Visualizer: WordBreakViz,
+    code: WORD_BREAK,
+  },
+
+  {
+    slug: 'longest-increasing-subsequence',
+    category: 'dynamic-programming',
+    title: 'Longest Increasing Subsequence',
+    difficulty: 'Medium',
+    blurb: 'Longest strictly increasing subsequence — dp[i] = best run ending at i.',
+    tags: ['LeetCode 300', 'Dynamic Programming'],
+    statement:
+      'Given an integer array nums, return the length of the longest strictly increasing subsequence. A subsequence keeps the original order but does not have to be contiguous.',
+    intuition: [
+      'Define dp[i] = the length of the longest increasing subsequence that ENDS exactly at index i. Anchoring on the last element is what makes the recurrence work.',
+      'Every element alone is a subsequence of length 1, so every dp[i] starts at 1.',
+      'To extend to i, look back at every earlier j: if nums[j] < nums[i], then the run ending at j can be extended by nums[i], giving a candidate of dp[j] + 1. Take the best.',
+      'The answer is not dp[n−1] but the MAXIMUM dp value anywhere — the longest run may not end at the last element.',
+    ],
+    steps: [
+      'Fill dp with 1s; track best = 1.',
+      'For each i, scan every j < i.',
+      'If nums[j] < nums[i], set dp[i] = max(dp[i], dp[j] + 1).',
+      'Update best with dp[i]; return best.',
+    ],
+    complexity: { time: 'O(n²) with this DP (an O(n log n) patience-sorting variant also exists).', space: 'O(n) for the dp array.' },
+    Visualizer: LongestIncreasingViz,
+    code: LIS_CODE,
+  },
+
+  {
+    slug: 'graph-valid-tree',
+    category: 'graphs',
+    title: 'Graph Valid Tree',
+    difficulty: 'Medium',
+    blurb: 'Is this graph a tree? Exactly n−1 edges and no cycles.',
+    tags: ['LeetCode 261', 'Union-Find', 'Graphs'],
+    statement:
+      'Given n nodes labeled 0..n−1 and a list of undirected edges, determine if these edges make up a valid tree — a graph that is fully connected and contains no cycles.',
+    intuition: [
+      'A tree on n nodes always has exactly n − 1 edges. Fewer and it can’t be connected; more and it must contain a cycle. So check the edge count first — it is a free early exit.',
+      'With the count right, the only remaining question is whether there is a cycle. Union–Find answers that: keep each node’s component, and join components as you add edges.',
+      'If an edge connects two nodes that are ALREADY in the same component, it closes a loop → not a tree.',
+      'If all n − 1 edges join two different components, no cycle ever formed — and n − 1 non-redundant merges must leave exactly one component, so it is automatically connected too.',
+    ],
+    steps: [
+      'If edges.length ≠ n − 1, return false immediately.',
+      'Initialize Union–Find with each node as its own component.',
+      'For each edge, find the roots of both endpoints.',
+      'If the roots match, a cycle exists → return false. Otherwise union the two components.',
+      'If every edge was absorbed without a cycle, return true.',
+    ],
+    complexity: { time: 'O(n · α(n)) ≈ O(n) with Union–Find.', space: 'O(n) for the parent array.' },
+    Visualizer: GraphValidTreeViz,
+    code: GRAPH_VALID_TREE,
+  },
+
 ]
 
 // ── Lookups ───────────────────────────────────────────────
@@ -3654,6 +4623,15 @@ const ADDED: Record<string, string> = {
   'trapping-rain-water': '2026-07-11T10:20:00Z',
   'character-replacement': '2026-07-11T10:30:00Z',
   'validate-bst': '2026-07-11T12:00:00Z',
+  'graph-valid-tree': '2026-07-12T10:00:00Z',
+  'reverse-linked-list': '2026-07-12T10:05:00Z',
+  'search-rotated': '2026-07-12T10:10:00Z',
+  subsets: '2026-07-12T10:15:00Z',
+  'combination-sum': '2026-07-12T10:20:00Z',
+  'house-robber': '2026-07-12T10:25:00Z',
+  'coin-change': '2026-07-12T10:30:00Z',
+  'word-break': '2026-07-12T10:35:00Z',
+  'longest-increasing-subsequence': '2026-07-12T10:40:00Z',
 }
 
 // Newest algorithms first (by publish date), for the home page.
